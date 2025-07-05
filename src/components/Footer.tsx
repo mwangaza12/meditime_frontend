@@ -19,7 +19,7 @@ export const Footer = () => {
             </aside>
             <nav className="grid-flow-col gap-4 md:place-self-center md:justify-self-end">
                 <a>
-                <BsTwitter size={20}/>
+                <BsTwitter size={20} className="text-blue-500"/>
                 </a>
                 <a>
                 <BsYoutube size={20} className="text-red-600"/>
