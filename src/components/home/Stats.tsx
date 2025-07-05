@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Calendar, Clock, Award, Heart, Shield, TrendingUp, Star } from 'lucide-react';
+import { Award, Heart, Shield, TrendingUp, Star } from 'lucide-react';
 
 type StatItem = {
   icon: React.ElementType;
@@ -82,30 +82,6 @@ export const Stats = () => {
   };
 
   const stats: StatItem[] = [
-    {
-      icon: Users,
-      value: 75000,
-      suffix: '+',
-      label: 'Happy Patients',
-      description: 'Trusted by thousands worldwide',
-      color: 'blue',
-    },
-    {
-      icon: Calendar,
-      value: 250000,
-      suffix: '+',
-      label: 'Appointments Scheduled',
-      description: 'Seamless booking experience',
-      color: 'teal',
-    },
-    {
-      icon: Clock,
-      value: 99.9,
-      suffix: '%',
-      label: 'Uptime Reliability',
-      description: 'Always available when you need us',
-      color: 'green',
-    },
     {
       icon: Award,
       value: 1500,
