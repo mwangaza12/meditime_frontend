@@ -48,11 +48,11 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             <button className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1">
               <User size={16} />
-              <span>Login</span>
+              <span><Link to="/login">Login</Link></span>
             </button>
             <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-1">
               <UserPlus size={16} />
-              <span>Register</span>
+              <span><Link to="/register">Register</Link></span>
             </button>
           </div>
 
