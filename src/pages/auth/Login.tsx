@@ -43,22 +43,25 @@ export const Login = () => {
         id: loadingToastId,
       });
 
-      const role = res?.userType;
+      const role = res?.role;  // Corrected from res.userType to res.role
       if (role === "admin") {
         navigate("/dashboard");
-      } else if (role === "restaurant_owner") {
-        navigate("/restaurant-dashboard");
+      } else if (role === "doctor") {
+        navigate("/doctor-dashboard");
       } else {
         navigate("/user-dashboard");
       }
     } catch (err: any) {
-      toast.error(
-        "Failed to Login: " +
-          (err.data?.message || err.message || err.error || err.toString())
-      );
-      toast.dismiss(loadingToastId);
+      const errorMessage =
+        err?.data?.error || err?.data?.message || err?.message || err?.error || err.toString();
+
+      toast.error(errorMessage || "Failed to login", {
+        id: loadingToastId,
+      });
+
     }
   };
+
 
   return (
     <div>
@@ -67,7 +70,7 @@ export const Login = () => {
         <div className="w-full max-w-2xl">
           <div className="bg-white rounded-3xl shadow-md overflow-hidden">
             <div className="p-8 lg:p-12">
-              <div className="mb-8">
+              <div className="mb-8 text-center">
                 <h2 className="text-3xl font-bold text-blue-800 mb-2">
                   Welcome Back
                 </h2>
