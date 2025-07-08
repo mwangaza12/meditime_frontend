@@ -32,8 +32,8 @@ export const userApi = createApi({
             })
         }),
         getAllUsers: builder.query({
-            query: () => "users",
-            providesTags: ["Users"], // Tag it
+            query: ({ page, pageSize }) => `users?page=${page}&pageSize=${pageSize}`,
+            providesTags: ["Users"],
         }),
         updateUser: builder.mutation({
             query: ({ id, ...body }) => ({
@@ -45,7 +45,7 @@ export const userApi = createApi({
 
         updateUserType: builder.mutation({
             query: ({ id, ...body }) => ({
-                url: `/users/userType/${id}`,
+                url: `users/role/${id}`,
                 method: 'PATCH',
                 body,
             }),

@@ -12,6 +12,7 @@ import { AdminDashboard } from "../pages/dashboard/AdminDashboard";
 import { UserDashboard } from "../pages/dashboard/UserDashboard";
 import { DoctorDashboard } from "../pages/dashboard/DoctorDashboard";
 import { AppointmentList } from "../pages/appointments/AppointmentList";
+import { UserList } from "../pages/users/UserList";
 
 export const router = createBrowserRouter([
   {
@@ -63,6 +64,10 @@ export const router = createBrowserRouter([
         path: "appointments",
         element: <AppointmentList />,
       },
+      {
+        path: "users",
+        element: <UserList />
+      }
     ],
   },
 
