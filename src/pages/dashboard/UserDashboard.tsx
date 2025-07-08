@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, User, Bell, MapPin, Star, MessageSquare, FileText, Heart, Pill } from "lucide-react";
 
-// Mock user data
-const mockUser = {
-  name: "John Doe",
-  email: "john.doe@email.com",
-  phone: "+1 (555) 123-4567",
-  avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-  memberSince: "January 2024"
-};
-
 // Mock appointments data
 const upcomingAppointments = [
   {
@@ -105,23 +96,6 @@ export const UserDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <img 
-              src={mockUser.avatar} 
-              alt={mockUser.name}
-              className="w-16 h-16 rounded-full object-cover"
-            />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome back, {mockUser.name}!</h1>
-              <p className="text-gray-600">Member since {mockUser.memberSince}</p>
-            </div>
-          </div>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition-colors">
-            Book Appointment
-          </button>
-        </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
