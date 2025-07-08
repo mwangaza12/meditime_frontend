@@ -22,7 +22,7 @@ export const Sidebar = () => {
     },
     appointment: {
       name: "Appointments",
-      path: "/appointments",
+      path: role === "doctor" ? "/doctor-dashboard/appointments" : "/user-dashboard/appointments",
       icon: Calendar,
       color: "from-[#093FB4] to-[#093FB4]",
     },
