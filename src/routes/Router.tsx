@@ -16,6 +16,7 @@ import { UserList } from "../pages/users/UserList";
 import { DoctorTabs } from "../pages/doctors/DoctorTabs";
 import { ComplaintsList } from "../pages/complaints/ComplaintsList";
 import { PrescriptionList } from "../pages/prescriptions/PrescriptionList";
+import { SpecializationList } from "../pages/specializations/SpecializationList";
 
 export const router = createBrowserRouter([
   {
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
       {
         path: "prescriptions",
         element: <PrescriptionList />
+      },
+      {
+        path: "specializations",
+        element: <SpecializationList />
       }
     ],
   },

@@ -1,4 +1,4 @@
-import {Car,Home,MapPin,MessageSquare,Package,Users,BookAIcon,Calendar,} from "lucide-react";
+import {Car,Home,MapPin,Package,Users,BookAIcon,Calendar, SpeechIcon,} from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
@@ -9,9 +9,6 @@ export const Sidebar = () => {
   const { pathname } = useLocation();
   const { user } = useSelector((state: RootState) => state.auth);
   const role = user?.role || "user";
-
-  console.log(role);
-
 
   const baseLinks = {
     dashboard: {
@@ -54,7 +51,7 @@ export const Sidebar = () => {
     { name: "Payments", path: "/dashboard/payments", icon: Car, color: "from-cyan-500 to-cyan-600" },
     { name: "Appointments", path: "/dashboard/appointments", icon: MapPin, color: "from-pink-500 to-pink-600" },
     { name: "Prescriptions", path: "/dashboard/prescriptions", icon: BsPrescription, color: "from-red-500 to-red-600" },
-    { name: "Comments", path: "/dashboard/comments", icon: MessageSquare, color: "from-lime-500 to-lime-600" },
+    { name: "Specialization", path: "/dashboard/specializations", icon: SpeechIcon, color: "from-indigo-500 to-indigo-600" },
   ];
 
   const userMenuItems = [
