@@ -32,6 +32,14 @@ export const appointmentApi = createApi({
             providesTags: ['Appointments']
         }),
 
+        getAppointmentsByDoctorId: builder.query({
+            query: ({ doctorId }) => ({
+                url: 'appointments/doctor',
+                params: { doctorId },
+            }),
+            providesTags: ['Appointments']
+        }),
+
         createAppointment: builder.mutation({
             query: (appointmentPayload) => ({
                 url: 'appointments',

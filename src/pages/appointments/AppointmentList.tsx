@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
 import { appointmentApi } from "../../feature/api/appointmentApi";
 import { useMemo, useState } from "react";
+import { skipToken } from '@reduxjs/toolkit/query/react';
 
 interface Appointment {
   id: string;
@@ -21,22 +22,35 @@ interface Appointment {
 export const AppointmentList = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
+  const isDoctor = user?.role === "doctor";
+  const isPatient = user?.role === "patient"; // or any other role for normal users
 
   const [showModal, setShowModal] = useState(false);
 
-  const { data: adminData = [], error: adminError, isLoading: adminLoading } = appointmentApi.useGetAllAppointmentsQuery(
+  // Fetch appointments based on role
+  const {
+    data: allData = [],
+    error: allError,
+    isLoading: allLoading,
+  } = appointmentApi.useGetAllAppointmentsQuery(
     { page: 1, pageSize: 10 },
     { skip: !isAdmin }
   );
 
-  const { data: userData = [], error: userError, isLoading: userLoading } = appointmentApi.useGetAppointmentsByUserIdQuery(
-    { userId: user?.userId },
-    { skip: isAdmin }
+  const {data: doctorData = [],error: doctorError,isLoading: doctorLoading,} = appointmentApi.useGetAppointmentsByDoctorIdQuery(
+      user?.userId ? { doctorId: user.userId } : skipToken,
+      { skip: !isDoctor }
   );
 
-  const data = isAdmin ? adminData : userData;
-  const isLoading = isAdmin ? adminLoading : userLoading;
-  const error = isAdmin ? adminError : userError;
+  const {data: userData = [],error: userError,isLoading: userLoading,} = appointmentApi.useGetAppointmentsByUserIdQuery(
+    user?.userId ? { userId: user.userId } : skipToken,
+    { skip: isAdmin || isDoctor }
+  );
+
+  // Select data, loading and error based on role
+  const data = isAdmin ? allData : isDoctor ? doctorData : userData;
+  const isLoading = isAdmin ? allLoading : isDoctor ? doctorLoading : userLoading;
+  const error = isAdmin ? allError : isDoctor ? doctorError : userError;
 
   const mapStatus = (status: string): Appointment["status"] => {
     switch (status?.toLowerCase()) {
@@ -110,7 +124,8 @@ export const AppointmentList = () => {
           <p className="text-gray-600">Manage and view all patient appointments</p>
         </div>
 
-        {!isAdmin && (
+        {/* Only patients (or non-admin, non-doctor users) can create appointments */}
+        {isPatient && (
           <button
             onClick={() => setShowModal(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition"
