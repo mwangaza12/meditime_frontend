@@ -15,6 +15,7 @@ import { AppointmentList } from "../pages/appointments/AppointmentList";
 import { UserList } from "../pages/users/UserList";
 import { DoctorTabs } from "../pages/doctors/DoctorTabs";
 import { ComplaintsList } from "../pages/complaints/ComplaintsList";
+import { PrescriptionList } from "../pages/prescriptions/PrescriptionList";
 
 export const router = createBrowserRouter([
   {
@@ -77,6 +78,10 @@ export const router = createBrowserRouter([
       {
         path: "complaints",
         element: <ComplaintsList />
+      },
+      {
+        path: "prescriptions",
+        element: <PrescriptionList />
       }
     ],
   },
@@ -102,6 +107,10 @@ export const router = createBrowserRouter([
       {
         path: "complaints",
         element: <ComplaintsList />
+      },
+      {
+        path: "prescriptions",
+        element: <PrescriptionList />
       }
     ],
   },
@@ -124,6 +133,10 @@ export const router = createBrowserRouter([
         path: "appointments",
         element: <AppointmentList />,
       },
+      {
+        path: "prescriptions",
+        element: <PrescriptionList />
+      }
     ],
   },
 ]);
