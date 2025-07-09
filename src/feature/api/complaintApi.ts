@@ -39,6 +39,7 @@ export const complaintApi = createApi({
                 url: `/complaints/user/${userId}`, 
                 method: "GET",
             }),
+            providesTags: ['Complaints']
         }),
     })
 })
