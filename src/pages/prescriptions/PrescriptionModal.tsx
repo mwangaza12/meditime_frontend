@@ -6,28 +6,51 @@ import { appointmentApi } from "../../feature/api/appointmentApi";
 import { TextInput } from "../../components/form/TextInput";
 import { User } from "lucide-react";
 import toast from "react-hot-toast";
+import { useEffect } from "react";
 
 type PrescriptionForm = {
-    appointmentId: number;
-    doctorId: number;
-    patientId: number;
-    notes: string;
+  appointmentId: number;
+  doctorId: number;
+  patientId: number;
+  notes: string;
 };
 
 export const PrescriptionModal = ({ onClose }: { onClose: () => void }) => {
-    const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useSelector((state: RootState) => state.auth);
 
-    const { data: appointmentsData } = appointmentApi.useGetAppointmentsByUserIdQuery(user?.userId);
+  const { data: appointmentsData } = appointmentApi.useGetAppointmentsByDoctorIdQuery({
+    doctorId: user?.userId,
+  });
 
-    const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
+  const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
 
-    const {register,handleSubmit,formState: { errors, isSubmitting, isValid },reset,} = useForm<PrescriptionForm>({
-        mode: "onChange",
-        defaultValues: {
-        doctorId: user?.userId, // Assuming current user is doctor or patient
-        patientId: user?.userId,
-        },
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+    watch,
+    setValue,
+  } = useForm<PrescriptionForm>({
+    mode: "onChange",
+    defaultValues: {
+      doctorId: user?.userId,
+      patientId: undefined,
+      notes: "",
+    },
+  });
+
+  const selectedAppointmentId = watch("appointmentId");
+
+  useEffect(() => {
+    const selectedAppointment = appointments.find(
+      (appt: any) => appt.appointmentId === selectedAppointmentId
+    );
+
+    if (selectedAppointment?.userId) {
+      setValue("patientId", selectedAppointment.userId);
+    }
+  }, [selectedAppointmentId, appointments, setValue]);
 
   const [createPrescription] = prescriptionApi.useCreatePrescriptionMutation();
 
@@ -61,7 +84,7 @@ export const PrescriptionModal = ({ onClose }: { onClose: () => void }) => {
           <option value="">Select appointment</option>
           {appointments.map((appt: any) => (
             <option key={appt.appointmentId} value={appt.appointmentId}>
-              {appt.appointmentDate} - {appt.doctor?.user?.firstName} {appt.doctor?.user?.lastName}
+              {appt.appointmentDate} - {appt.user?.firstName} {appt.user?.lastName}
             </option>
           ))}
         </select>
@@ -95,7 +118,6 @@ export const PrescriptionModal = ({ onClose }: { onClose: () => void }) => {
           min: { value: 1, message: "Invalid ID" },
         })}
         error={errors.patientId?.message}
-        value={user?.userId || ""}
       />
 
       <div className="space-y-1">

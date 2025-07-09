@@ -33,7 +33,8 @@ export const PrescriptionList = () => {
     ? prescriptionApi.useGetAllPrescriptionsQuery({ page: 1, pageSize: 10 })
     : isDoctor
     ? prescriptionApi.useGetPrescriptionsByDoctorIdQuery(
-        user?.userId ? { doctorId: user.userId } : skipToken
+        user?.userId ? { doctorId: user.userId } : skipToken,
+        { skip: !isDoctor }
       )
     : prescriptionApi.useGetPrescriptionsByUserIdQuery(
         user?.userId ? { userId: user.userId } : skipToken

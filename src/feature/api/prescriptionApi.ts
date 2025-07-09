@@ -35,9 +35,9 @@ export const prescriptionApi = createApi({
         }),
 
         getPrescriptionsByDoctorId: builder.query({
-            query: ({ userId }) => ({
+            query: ({ doctorId }) => ({
                 url: 'prescriptions/doctor',
-                params: { userId },
+                params: { doctorId },
             }),
             providesTags: ['Prescriptions']
         }),
