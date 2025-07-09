@@ -22,7 +22,33 @@ export const doctorApi = createApi({
                 params: { page, pageSize },
             }),
             providesTags: ['Doctors']
-        })
+        }),
+
+        getUserDoctors: builder.query({
+            query: ({ page, pageSize }) => ({
+                url: 'users/doctors',
+                params: { page, pageSize },
+            }),
+            providesTags: ['Doctors']
+        }),
+
+        createDoctor: builder.mutation({
+            query: (doctorPayload) => ({
+                url: 'doctors',
+                method: 'POST',
+                body: doctorPayload
+            }),
+            invalidatesTags: ['Doctors']
+        }),
+
+        updateDoctor: builder.mutation({
+            query: ({ id, ...body }) => ({
+                url: `doctors/${id}`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: ['Doctors']
+        }),
     })
 
 })

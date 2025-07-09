@@ -249,19 +249,19 @@ export const AdminDashboard = () => {
                 <p className="text-sm text-gray-500">Loading appointments...</p>
               ) : (
                 recentAppointments.map((appointment: any) => (
-                  <div key={appointment.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                  <div key={appointment.appointmentId} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{appointment.patient || 'Unknown'}</p>
-                      <p className="text-xs text-gray-500">{appointment.service || 'Service'}</p>
+                      <p className="text-sm font-medium text-gray-900">{appointment.user?.firstName} {appointment.user?.lastName}</p>
+                      <p className="text-xs text-gray-500">{appointment.doctor?.specialization || 'Service'}</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500">{appointment.time || 'Time'}</span>
+                      <span className="text-xs text-gray-500">{appointment.timeSlot || 'Time'}</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        appointment.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                        appointment.appointmentStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        appointment.appointmentStatus === 'pending' ? 'bg-blue-100 text-blue-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {appointment.status}
+                        {appointment.appointmentStatus}
                       </span>
                     </div>
                   </div>

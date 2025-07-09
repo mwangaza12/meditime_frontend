@@ -13,6 +13,7 @@ import { UserDashboard } from "../pages/dashboard/UserDashboard";
 import { DoctorDashboard } from "../pages/dashboard/DoctorDashboard";
 import { AppointmentList } from "../pages/appointments/AppointmentList";
 import { UserList } from "../pages/users/UserList";
+import { DoctorTabs } from "../pages/doctors/DoctorTabs";
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ export const router = createBrowserRouter([
       {
         path: "users",
         element: <UserList />
+      },
+      {
+        path: "Doctors",        // 🔑 CHANGE this line:
+        element: <DoctorTabs />  // ✅ Use DoctorTabs here
       }
     ],
   },
