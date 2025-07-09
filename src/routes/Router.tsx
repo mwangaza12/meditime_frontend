@@ -14,6 +14,7 @@ import { DoctorDashboard } from "../pages/dashboard/DoctorDashboard";
 import { AppointmentList } from "../pages/appointments/AppointmentList";
 import { UserList } from "../pages/users/UserList";
 import { DoctorTabs } from "../pages/doctors/DoctorTabs";
+import { ComplaintsList } from "../pages/complaints/ComplaintsList";
 
 export const router = createBrowserRouter([
   {
@@ -70,8 +71,12 @@ export const router = createBrowserRouter([
         element: <UserList />
       },
       {
-        path: "Doctors",        // 🔑 CHANGE this line:
-        element: <DoctorTabs />  // ✅ Use DoctorTabs here
+        path: "Doctors",        
+        element: <DoctorTabs /> 
+      },
+      {
+        path: "complaints",
+        element: <ComplaintsList />
       }
     ],
   },
@@ -94,6 +99,10 @@ export const router = createBrowserRouter([
         path: "appointments",
         element: <AppointmentList />,
       },
+      {
+        path: "complaints",
+        element: <ComplaintsList />
+      }
     ],
   },
 

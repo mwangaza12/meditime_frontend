@@ -5,6 +5,7 @@ import storage from "redux-persist/lib/storage";
 import authReducer from "../feature/auth/authSlice";
 import { appointmentApi } from "../feature/api/appointmentApi";
 import { doctorApi } from "../feature/api/doctorApi";
+import { complaintApi } from "../feature/api/complaintApi";
 
 // create a persist config for the auth Slice
 const authPersistConfig = {
@@ -21,13 +22,14 @@ export const store = configureStore({
         [userApi.reducerPath]: userApi.reducer,
         [appointmentApi.reducerPath]: appointmentApi.reducer,
         [doctorApi.reducerPath]: doctorApi.reducer,
+        [complaintApi.reducerPath]: complaintApi.reducer,
         //use the Persistent reducer
         auth: persistentAuthReducer
     },
     middleware: (getDefaultMiddleware) => 
         getDefaultMiddleware({
             serializableCheck: false
-        }).concat(userApi.middleware, appointmentApi.middleware, doctorApi.middleware)
+        }).concat(userApi.middleware, appointmentApi.middleware, doctorApi.middleware, complaintApi.middleware)
 })
 
 // export the persisted store

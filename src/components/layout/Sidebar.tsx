@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
 import { BsPrescription } from "react-icons/bs";
-import { FaMoneyBill } from "react-icons/fa";
+import { FaMoneyBill, FaPage4 } from "react-icons/fa";
 
 export const Sidebar = () => {
   const { pathname } = useLocation();
@@ -37,6 +37,12 @@ export const Sidebar = () => {
       path: "/payments",
       icon: FaMoneyBill,
       color: "from-orange-500 to-orange-700"
+    },
+    complaint: {
+      name: "Complaints",
+      path: "/user-dashboard/complaints",
+      icon: FaPage4,
+      color: "from-teal-500 to-teal-600"
     }
   };
 
@@ -55,7 +61,8 @@ export const Sidebar = () => {
     baseLinks.dashboard,
     baseLinks.appointment,
     baseLinks.prescription,
-    baseLinks.payment
+    baseLinks.payment,
+    baseLinks.complaint
   ];
 
   const doctorMenuItems = [
