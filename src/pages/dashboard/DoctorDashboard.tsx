@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Calendar, Users, MessageSquare, FileText,  Phone, Video, AlertCircle, CheckCircle, XCircle, Activity, TrendingUp } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../app/store';
+import { appointmentApi } from '../../feature/api/appointmentApi';
 
 // Mock data for charts
 const patientVisitsData = [
@@ -27,46 +29,6 @@ const weeklyScheduleData = [
   { day: 'Fri', appointments: 13 },
   { day: 'Sat', appointments: 6 },
   { day: 'Sun', appointments: 0 },
-];
-
-// Mock appointments data
-const todaysAppointments = [
-  {
-    id: 1,
-    patient: "John Doe",
-    time: "9:00 AM",
-    type: "Consultation",
-    status: "Confirmed",
-    duration: "30 min",
-    isNew: false
-  },
-  {
-    id: 2,
-    patient: "Jane Smith",
-    time: "10:30 AM",
-    type: "Follow-up",
-    status: "Confirmed",
-    duration: "15 min",
-    isNew: false
-  },
-  {
-    id: 3,
-    patient: "Mike Johnson",
-    time: "2:00 PM",
-    type: "Consultation",
-    status: "Pending",
-    duration: "45 min",
-    isNew: true
-  },
-  {
-    id: 4,
-    patient: "Sarah Wilson",
-    time: "3:30 PM",
-    type: "Check-up",
-    status: "Confirmed",
-    duration: "30 min",
-    isNew: false
-  }
 ];
 
 const recentPatients = [
@@ -117,6 +79,12 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, changeType, s
 );
 
 export const DoctorDashboard = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+  const userId = user.userId;
+
+  const { data: appointments = [] } = appointmentApi.useGetAppointmentsByDoctorIdQuery({doctorId: userId });
+  console.log(appointments);
+
   const [activeView, setActiveView] = useState<'today' | 'week'>('today');
 
   return (
@@ -126,8 +94,8 @@ export const DoctorDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Today's Appointments"
-            value="8"
-            subtitle="4 confirmed, 1 pending"
+            value={appointments.length.toString()}
+            subtitle={`${appointments.filter((apt: any) => apt.appointmentStatus === 'confirmed').length} confirmed, ${appointments.filter((apt: any) => apt.appointmentStatus === 'pending').length} pending`}
             icon={Calendar}
             bgColor="bg-blue-50"
             iconColor="text-blue-600"
@@ -195,54 +163,73 @@ export const DoctorDashboard = () => {
 
               {activeView === 'today' ? (
                 <div className="space-y-4">
-                  {todaysAppointments.map((appointment) => (
-                    <div key={appointment.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-medium text-sm">
-                              {appointment.patient.split(' ').map(n => n[0]).join('')}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 flex items-center">
-                              {appointment.patient}
-                              {appointment.isNew && (
-                                <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                  New
+                  {appointments.length > 0 ? (
+                    appointments.map((appointment: any) => {
+                      // Get patient name from the user object
+                      const patientName = appointment.user 
+                        ? `${appointment.user.firstName} ${appointment.user.lastName}`
+                        : 'Unknown Patient';
+                      
+                      // Get initials for avatar
+                      const initials = appointment.user 
+                        ? `${appointment.user.firstName?.[0] || ''}${appointment.user.lastName?.[0] || ''}`
+                        : 'U';
+                      
+                      return (
+                        <div key={appointment.appointmentId} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 font-medium text-sm">
+                                  {initials}
                                 </span>
-                              )}
-                            </h3>
-                            <p className="text-sm text-gray-600">{appointment.type}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900">{appointment.time}</p>
-                            <p className="text-sm text-gray-600">{appointment.duration}</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {appointment.status === 'Confirmed' ? (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            ) : (
-                              <XCircle className="w-5 h-5 text-yellow-500" />
-                            )}
-                            <div className="flex space-x-1">
-                              <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
-                                <Phone className="w-4 h-4" />
-                              </button>
-                              <button className="p-1 text-green-600 hover:bg-green-50 rounded">
-                                <Video className="w-4 h-4" />
-                              </button>
-                              <button className="p-1 text-gray-600 hover:bg-gray-50 rounded">
-                                <MessageSquare className="w-4 h-4" />
-                              </button>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 flex items-center">
+                                  {patientName}
+                                  {appointment.isNew && (
+                                    <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                      New
+                                    </span>
+                                  )}
+                                </h3>
+                                <p className="text-sm text-gray-600">{appointment.type || 'Consultation'}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <p className="font-medium text-gray-900">{appointment.timeSlot}</p>
+                                <p className="text-sm text-gray-600">{appointment.duration || '30 min'}</p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {appointment.appointmentStatus === 'confirmed' ? (
+                                  <CheckCircle className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <XCircle className="w-5 h-5 text-yellow-500" />
+                                )}
+                                <div className="flex space-x-1">
+                                  <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                                    <Phone className="w-4 h-4" />
+                                  </button>
+                                  <button className="p-1 text-green-600 hover:bg-green-50 rounded">
+                                    <Video className="w-4 h-4" />
+                                  </button>
+                                  <button className="p-1 text-gray-600 hover:bg-gray-50 rounded">
+                                    <MessageSquare className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No appointments scheduled for today</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               ) : (
                 <div className="h-64">
