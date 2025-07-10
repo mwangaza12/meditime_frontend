@@ -49,6 +49,18 @@ export const doctorApi = createApi({
             }),
             invalidatesTags: ['Doctors']
         }),
+
+        browseDoctors: builder.query({
+            query: ({ specializationId, page = 1, pageSize = 10 }) => ({
+                url: 'doctors/specialization',
+                params: {
+                    page,
+                    pageSize,
+                    specializationId,
+                },
+            }),
+            providesTags: ['Doctors'],
+        }),
     })
 
 })

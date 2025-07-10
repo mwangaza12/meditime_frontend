@@ -40,6 +40,12 @@ export const Sidebar = () => {
       path: "/user-dashboard/complaints",
       icon: FaPage4,
       color: "from-teal-500 to-teal-600"
+    },
+    browseDoctors: {
+      name: "Browse Doctors",
+      path: "/browse-doctors",
+      icon: FaPage4,
+      color: "from-purple-500 to-purple-600"
     }
   };
 
@@ -52,6 +58,7 @@ export const Sidebar = () => {
     { name: "Appointments", path: "/dashboard/appointments", icon: MapPin, color: "from-pink-500 to-pink-600" },
     { name: "Prescriptions", path: "/dashboard/prescriptions", icon: BsPrescription, color: "from-red-500 to-red-600" },
     { name: "Specialization", path: "/dashboard/specializations", icon: SpeechIcon, color: "from-indigo-500 to-indigo-600" },
+    { name: "Doctor-availability", path: "/dashboard/doctor-availability", icon: SpeechIcon, color: "from-indigo-500 to-indigo-600" },
   ];
 
   const userMenuItems = [
@@ -59,7 +66,8 @@ export const Sidebar = () => {
     baseLinks.appointment,
     baseLinks.prescription,
     baseLinks.payment,
-    baseLinks.complaint
+    baseLinks.complaint,
+    baseLinks.browseDoctors
   ];
 
   const doctorMenuItems = [

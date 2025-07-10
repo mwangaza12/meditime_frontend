@@ -1,11 +1,9 @@
 import { Table } from "../../components/table/Table";
 import { Spinner } from "../../components/loader/Spinner";
-import { Modal } from "../../components/modal/Modal";
-import { AppointmentModal } from "./AppointmentModal";
 import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
 import { appointmentApi } from "../../feature/api/appointmentApi";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 interface Appointment {
@@ -23,9 +21,6 @@ export const AppointmentList = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
   const isDoctor = user?.role === "doctor";
-  const isPatient = user?.role === "patient"; // or any other role for normal users
-
-  const [showModal, setShowModal] = useState(false);
 
   // Fetch appointments based on role
   const {
@@ -123,16 +118,6 @@ export const AppointmentList = () => {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Appointments</h1>
           <p className="text-gray-600">Manage and view all patient appointments</p>
         </div>
-
-        {/* Only patients (or non-admin, non-doctor users) can create appointments */}
-        {isPatient && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition"
-          >
-            + Create Appointment
-          </button>
-        )}
       </div>
 
       {isLoading ? (
@@ -149,15 +134,6 @@ export const AppointmentList = () => {
           emptyText="No appointments found."
         />
       )}
-
-      <Modal
-        title="Create Appointment"
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        width="max-w-xl"
-      >
-        <AppointmentModal onClose={() => setShowModal(false)} />
-      </Modal>
     </div>
   );
 };

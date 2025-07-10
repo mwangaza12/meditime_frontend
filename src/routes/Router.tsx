@@ -17,6 +17,8 @@ import { DoctorTabs } from "../pages/doctors/DoctorTabs";
 import { ComplaintsList } from "../pages/complaints/ComplaintsList";
 import { PrescriptionList } from "../pages/prescriptions/PrescriptionList";
 import { SpecializationList } from "../pages/specializations/SpecializationList";
+import { DoctorAvailabilityList } from "../pages/doctorsAvailability/DoctorAvailabilityList";
+import { BrowseDoctors } from "../pages/doctors/BrowseDoctors";
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +49,11 @@ export const router = createBrowserRouter([
   {
     path: "/email-verification",
     element: <EmailVerification />,
+    errorElement: <Error />,
+  },
+  {
+    path: "browse-doctors",
+    element: <BrowseDoctors />,
     errorElement: <Error />,
   },
 
@@ -87,6 +94,10 @@ export const router = createBrowserRouter([
       {
         path: "specializations",
         element: <SpecializationList />
+      },
+      {
+        path: "doctor-availability",
+        element: <DoctorAvailabilityList />
       }
     ],
   },
@@ -116,6 +127,10 @@ export const router = createBrowserRouter([
       {
         path: "prescriptions",
         element: <PrescriptionList />
+      },
+      {
+        path: "browse-doctors",
+        element: <BrowseDoctors />
       }
     ],
   },

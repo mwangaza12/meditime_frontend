@@ -1,46 +1,55 @@
 import { useForm } from "react-hook-form";
-import { User, Briefcase, Phone, Calendar } from "lucide-react";
+import { User, Briefcase, Phone } from "lucide-react";
 import { TextInput } from "../../components/form/TextInput";
 import { Modal } from "../../components/modal/Modal";
 import toast from "react-hot-toast";
 import { doctorApi } from "../../feature/api/doctorApi";
+import { specializationApi } from "../../feature/api/specializationApi";
 import { useEffect } from "react";
 
 type DoctorForm = {
   userId: number;
-  specialization: string;
+  specializationId: number;
   contactPhone: string;
-  availableDays: string;
 };
 
 interface DoctorModalProps {
   show: boolean;
   onClose: () => void;
-  initialData?: DoctorForm & { id?: number } | null;  // added optional id
+  initialData?: DoctorForm & { id?: number } | null;
   isEdit?: boolean;
 }
 
 export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false }: DoctorModalProps) => {
-  const { register, handleSubmit, formState: { errors, isSubmitting, isValid }, reset } = useForm<DoctorForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+  } = useForm<DoctorForm>({
     mode: "onChange",
     defaultValues: {
       userId: initialData?.userId ?? undefined,
-      specialization: initialData?.specialization ?? "",
+      specializationId: initialData?.specializationId ?? undefined,
       contactPhone: initialData?.contactPhone ?? "",
-      availableDays: initialData?.availableDays ?? "",
     },
   });
 
   const [createDoctor] = doctorApi.useCreateDoctorMutation();
   const [updateDoctor] = doctorApi.useUpdateDoctorMutation();
+  const { data: specializationData, isLoading: specializationLoading } = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
+
+  console.log(specializationData);
+
+  // ✅ Fix: Extract the correct array
+  const specializationList = specializationData?.specializations || [];
 
   useEffect(() => {
     if (initialData) {
       reset({
         userId: initialData.userId ?? undefined,
-        specialization: initialData.specialization ?? "",
+        specializationId: initialData.specializationId ?? undefined,
         contactPhone: initialData.contactPhone ?? "",
-        availableDays: initialData.availableDays ?? "",
       });
     } else {
       reset();
@@ -49,20 +58,15 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
 
   const onSubmit = async (data: DoctorForm) => {
     const loadingToast = toast.loading(isEdit ? "Updating doctor..." : "Creating doctor...");
-
     try {
       let res;
-
       if (isEdit && initialData?.id) {
-        // Update case: pass id + form data
         res = await updateDoctor({ id: initialData.id, ...data }).unwrap();
         toast.success(res?.message || "Doctor updated!", { id: loadingToast });
       } else {
-        // Create case
         res = await createDoctor(data).unwrap();
         toast.success(res?.message || "Doctor created!", { id: loadingToast });
       }
-
       reset();
       onClose();
     } catch (err: any) {
@@ -88,6 +92,7 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
+        {/* User ID */}
         <TextInput
           label="User ID"
           type="number"
@@ -102,18 +107,35 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
           error={errors.userId?.message}
         />
 
-        <TextInput
-          label="Specialization"
-          type="text"
-          placeholder="Enter Specialization"
-          icon={<Briefcase size={16} />}
-          name="specialization"
-          register={register("specialization", {
-            required: "Specialization is required",
-          })}
-          error={errors.specialization?.message}
-        />
+        {/* Specialization */}
+        <div className="space-y-1">
+          <label className="block text-sm font-medium">Specialization</label>
+          <div className="flex items-center border rounded-lg px-3 py-2">
+            <Briefcase size={16} className="mr-2 text-gray-500" />
+            <select
+              {...register("specializationId", {
+                valueAsNumber: true,
+                required: "Specialization is required",
+              })}
+              defaultValue={initialData?.specializationId ?? ""}
+              className="w-full bg-transparent outline-none"
+            >
+              <option value="" disabled>
+                {specializationLoading ? "Loading specializations..." : "Select Specialization"}
+              </option>
+              {specializationList.map((item: any) => (
+                <option key={item.specializationId} value={item.specializationId}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {errors.specializationId && (
+            <p className="text-red-500 text-sm">{errors.specializationId.message}</p>
+          )}
+        </div>
 
+        {/* Contact Phone */}
         <TextInput
           label="Contact Phone"
           type="text"
@@ -126,26 +148,23 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
           error={errors.contactPhone?.message}
         />
 
-        <TextInput
-          label="Available Days"
-          type="text"
-          placeholder="e.g. Monday - Friday"
-          icon={<Calendar size={16} />}
-          name="availableDays"
-          register={register("availableDays", {
-            required: "Available days are required",
-          })}
-          error={errors.availableDays?.message}
-        />
-
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={!isValid || isSubmitting}
           className={`w-full py-2 rounded-lg font-semibold text-white transition-all ${
-            !isValid || isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 shadow"
+            !isValid || isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 shadow"
           }`}
         >
-          {isSubmitting ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Doctor" : "Create Doctor")}
+          {isSubmitting
+            ? isEdit
+              ? "Updating..."
+              : "Creating..."
+            : isEdit
+            ? "Update Doctor"
+            : "Create Doctor"}
         </button>
 
       </form>

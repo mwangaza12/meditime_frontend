@@ -8,6 +8,7 @@ import { doctorApi } from "../feature/api/doctorApi";
 import { complaintApi } from "../feature/api/complaintApi";
 import { prescriptionApi } from "../feature/api/prescriptionApi";
 import { specializationApi } from "../feature/api/specializationApi";
+import { doctorAvailabilityApi } from "../feature/api/doctorAvailabilityApi";
 
 // create a persist config for the auth Slice
 const authPersistConfig = {
@@ -27,13 +28,14 @@ export const store = configureStore({
         [complaintApi.reducerPath]: complaintApi.reducer,
         [prescriptionApi.reducerPath]: prescriptionApi.reducer,
         [specializationApi.reducerPath]: specializationApi.reducer,
+        [doctorAvailabilityApi.reducerPath]: doctorAvailabilityApi.reducer,
         //use the Persistent reducer
         auth: persistentAuthReducer
     },
     middleware: (getDefaultMiddleware) => 
         getDefaultMiddleware({
             serializableCheck: false
-        }).concat(userApi.middleware, appointmentApi.middleware, doctorApi.middleware, complaintApi.middleware, prescriptionApi.middleware, specializationApi.middleware)
+        }).concat(userApi.middleware, appointmentApi.middleware, doctorApi.middleware, complaintApi.middleware, prescriptionApi.middleware, specializationApi.middleware, doctorAvailabilityApi.middleware)
 })
 
 // export the persisted store

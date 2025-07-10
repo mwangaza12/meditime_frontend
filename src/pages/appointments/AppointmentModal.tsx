@@ -1,154 +1,125 @@
-import { useForm } from "react-hook-form";
-import { Calendar, Clock, DollarSign, User } from "lucide-react";
-import { TextInput } from "../../components/form/TextInput";
-import toast from "react-hot-toast";
-import { appointmentApi } from "../../feature/api/appointmentApi";
+import { useState } from "react";
 import { useSelector } from "react-redux";
-import { type RootState } from "../../app/store";
-import { doctorApi } from "../../feature/api/doctorApi";
+import { appointmentApi } from "../../feature/api/appointmentApi";
+import { X, User, Phone } from "lucide-react";
+import type { RootState } from "../../app/store";
+import { toast } from "react-hot-toast";
 
-type AppointmentForm = {
-  userId: number;
-  doctorId: number;
-  appointmentDate: string;
-  timeSlot: string;
-  totalAmount: string;
-};
+export const AppointmentModal = ({
+  onClose,
+  doctor,
+}: {
+  onClose: () => void;
+  doctor: any;
+}) => {
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
-export const AppointmentModal = ({ onClose }: { onClose: () => void }) => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const [createAppointment, { isLoading }] = appointmentApi.useCreateAppointmentMutation();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isValid },
-    reset,
-  } = useForm<AppointmentForm>({
-    mode: "onChange",
-    defaultValues: { userId: user?.userId },
-  });
+  const user = useSelector((state: RootState) => state.auth.user);
+  const userId = user?.id || user?.userId;  // Adjust this according to your auth state
 
-  const {
-    data: doctorsData,
-    isLoading: doctorsLoading,
-    error: doctorsError,
-  } = doctorApi.useGetAllDoctorsQuery({
-    page: 1,
-    pageSize: 100,
-  });
+  if (!doctor) return null;
 
-  console.log("doctorsData:", doctorsData);
+  const handleConfirm = async () => {
+    if (!selectedDate || !selectedTime) {
+      toast.error("Please select both date and time.");
+      return;
+    }
 
-  // ✅ Correct way to extract doctors list
-  const doctors = Array.isArray(doctorsData?.doctors) ? doctorsData.doctors : [];
+    if (!userId) {
+      toast.error("User not logged in.");
+      return;
+    }
 
-  const [createAppointment] = appointmentApi.useCreateAppointmentMutation();
+    const appointmentData = {
+      userId: userId,  // ✅ Logged-in patient ID (must be number)
+      doctorId: doctor?.doctorId,  // ✅ Doctor ID (must match backend type: number or string)
+      appointmentDate: selectedDate,
+      timeSlot: selectedTime,
+      totalAmount: doctor?.consultationFee?.toString() || "0",
+    };
 
-  const onSubmit = async (data: AppointmentForm) => {
-    const loadingToast = toast.loading("Creating appointment...");
     try {
-      const res = await createAppointment(data).unwrap();
-      toast.success(res?.message || "Appointment created successfully!", { id: loadingToast });
-      reset();
+      await createAppointment(appointmentData).unwrap();
+      toast.success("Appointment booked successfully!");
       onClose();
-    } catch (err: any) {
-      const message =
-        err?.data?.error ||
-        err?.data?.message ||
-        err?.message ||
-        err?.error ||
-        "Failed to create appointment";
-      toast.error(message, { id: loadingToast });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.data?.error || "Failed to book appointment.");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-
-      <TextInput
-        label="User ID"
-        type="number"
-        placeholder="User ID"
-        icon={<User size={16} />}
-        name="userId"
-        register={register("userId", {
-          valueAsNumber: true,
-          required: "User ID is required",
-          min: { value: 1, message: "User ID must be positive" },
-        })}
-        error={errors.userId?.message}
-        value={user?.userId || ""}
-      />
-
-      {/* Doctor Selection */}
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Doctor</label>
-        <div className="relative">
-          <select
-            {...register("doctorId", { required: "Please select a doctor", valueAsNumber: true })}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-500"
-          >
-            <option value="">Select a doctor</option>
-            {doctorsLoading && <option disabled>Loading doctors...</option>}
-            {doctorsError && <option disabled>Failed to load doctors</option>}
-            {doctors.map((doctor: any) => (
-              <option key={doctor.doctorId} value={doctor.doctorId}>
-                Dr. {doctor.user?.firstName} {doctor.user?.lastName} ({doctor.specialization || "N/A"})
-              </option>
-            ))}
-          </select>
-        </div>
-        {errors.doctorId && <p className="text-red-500 text-sm">{errors.doctorId.message}</p>}
+    <div className="p-4 space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-800">Book Appointment</h2>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <TextInput
-        label="Appointment Date"
-        type="date"
-        placeholder="Select Date"
-        icon={<Calendar size={16} />}
-        name="appointmentDate"
-        register={register("appointmentDate", {
-          required: "Date is required",
-        })}
-        error={errors.appointmentDate?.message}
-      />
+      {/* Doctor Details */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-blue-700 mb-1">
+          Dr. {doctor?.user?.firstName} {doctor?.user?.lastName}
+        </h3>
+        <p className="text-sm text-gray-700 mb-1">
+          {doctor?.specialization?.name || "Specialization not available"}
+        </p>
+        {doctor?.user?.email && (
+          <p className="text-sm text-gray-600 flex items-center gap-2">
+            <User className="w-4 h-4" /> {doctor.user.email}
+          </p>
+        )}
+        {doctor?.user?.phoneNumber && (
+          <p className="text-sm text-gray-600 flex items-center gap-2">
+            <Phone className="w-4 h-4" /> {doctor.user.phoneNumber}
+          </p>
+        )}
+        <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+          💰 Fee: <span className="font-semibold">${doctor?.consultationFee || 0}</span>
+        </p>
+      </div>
 
-      <TextInput
-        label="Time Slot"
-        type="time"
-        placeholder="Select Time"
-        icon={<Clock size={16} />}
-        name="timeSlot"
-        register={register("timeSlot", {
-          required: "Time slot is required",
-        })}
-        error={errors.timeSlot?.message}
-      />
+      {/* Appointment Form */}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Select Date</label>
+          <input
+            type="date"
+            className="w-full border rounded px-3 py-2"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </div>
 
-      <TextInput
-        label="Total Amount"
-        type="number"
-        placeholder="Enter total amount"
-        icon={<DollarSign size={16} />}
-        name="totalAmount"
-        register={register("totalAmount", {
-          required: "Total amount is required",
-          min: { value: 0, message: "Total amount must be positive" },
-        })}
-        error={errors.totalAmount?.message}
-      />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Select Time</label>
+          <select
+            className="w-full border rounded px-3 py-2"
+            value={selectedTime}
+            onChange={(e) => setSelectedTime(e.target.value)}
+          >
+            <option value="">Select Time Slot</option>
+            <option value="09:00 AM">09:00 AM</option>
+            <option value="10:00 AM">10:00 AM</option>
+            <option value="11:00 AM">11:00 AM</option>
+            <option value="12:00 PM">12:00 PM</option>
+            <option value="02:00 PM">02:00 PM</option>
+          </select>
+        </div>
 
-      <button
-        type="submit"
-        disabled={!isValid || isSubmitting}
-        className={`w-full py-2 rounded-lg font-semibold text-white transition-all ${
-          !isValid || isSubmitting
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700 shadow"
-        }`}
-      >
-        {isSubmitting ? "Creating..." : "Create Appointment"}
-      </button>
-    </form>
+        <button
+          onClick={handleConfirm}
+          disabled={isLoading}
+          className="w-full bg-blue-600 text-white rounded py-3 hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {isLoading ? "Booking..." : "Confirm Appointment"}
+        </button>
+      </div>
+    </div>
   );
 };

@@ -42,11 +42,13 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
   const doctorQuery = doctorApi.useGetAllDoctorsQuery({ page, pageSize });
   const userQuery = doctorApi.useGetUserDoctorsQuery({ page, pageSize });
 
-  // Step 1: Build doctors list
   const doctors: Doctor[] = (doctorQuery.data?.doctors ?? []).map((doc: any) => ({
     id: doc.id ?? doc.doctorId ?? doc.userId ?? 0,
-    specialization: doc.specialization ?? 'N/A',
-    availableDays: doc.availableDays ?? 'N/A',
+    specialization:
+      typeof doc.specialization === 'object' && doc.specialization !== null
+        ? doc.specialization.name ?? 'N/A'
+        : doc.specialization ?? 'N/A',
+    availableDays: doc.availability?.[0]?.dayOfWeek ?? 'N/A',
     user: {
       firstName: doc.user?.firstName ?? doc.firstName ?? '',
       lastName: doc.user?.lastName ?? doc.lastName ?? '',
@@ -55,12 +57,10 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
     },
   }));
 
-  // Step 2: Extract existing doctor userIds
   const doctorUserIds = new Set<number>(doctors.map(d => d.id));
 
-  // Step 3: Build users list, filtering out those who are already doctors
   const users: User[] = (userQuery.data?.doctors ?? [])
-    .filter((u: any) => !doctorUserIds.has(u.userId ?? 0))  // ✅ Filter out doctors
+    .filter((u: any) => !doctorUserIds.has(u.userId ?? 0))
     .map((u: any) => ({
       userId: u.userId ?? 0,
       firstName: u.firstName ?? '',
@@ -104,11 +104,26 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
   };
 
   const doctorColumns = [
-    { header: 'Doctor', accessor: (d: Doctor) => <span>{d.user.firstName} {d.user.lastName}</span> },
-    { header: 'Specialization', accessor: (d: Doctor) => <span>{d.specialization}</span> },
-    { header: 'Contact', accessor: (d: Doctor) => <span>{d.user.contactPhone}</span> },
-    { header: 'Email', accessor: (d: Doctor) => <span>{d.user.email}</span> },
-    { header: 'Available Days', accessor: (d: Doctor) => <span>{d.availableDays}</span> },
+    {
+      header: 'Doctor',
+      accessor: (d: Doctor) => <span>{d.user.firstName} {d.user.lastName}</span>,
+    },
+    {
+      header: 'Specialization',
+      accessor: (d: Doctor) => <span>{d.specialization}</span>,
+    },
+    {
+      header: 'Contact',
+      accessor: (d: Doctor) => <span>{d.user.contactPhone}</span>,
+    },
+    {
+      header: 'Email',
+      accessor: (d: Doctor) => <span>{d.user.email}</span>,
+    },
+    {
+      header: 'Available Days',
+      accessor: (d: Doctor) => <span>{d.availableDays}</span>,
+    },
     {
       header: 'Actions',
       accessor: (d: Doctor) => (
@@ -122,11 +137,28 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
   ];
 
   const userColumns = [
-    { header: 'User', accessor: (u: User) => <span>{u.firstName} {u.lastName}</span> },
-    { header: 'Email', accessor: (u: User) => <span>{u.email}</span> },
-    { header: 'Contact', accessor: (u: User) => <span>{u.contactPhone || 'N/A'}</span> },
-    { header: 'Address', accessor: (u: User) => <span>{u.address || 'N/A'}</span> },
-    { header: 'Joined', accessor: (u: User) => <span>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</span> },
+    {
+      header: 'User',
+      accessor: (u: User) => <span>{u.firstName} {u.lastName}</span>,
+    },
+    {
+      header: 'Email',
+      accessor: (u: User) => <span>{u.email}</span>,
+    },
+    {
+      header: 'Contact',
+      accessor: (u: User) => <span>{u.contactPhone || 'N/A'}</span>,
+    },
+    {
+      header: 'Address',
+      accessor: (u: User) => <span>{u.address || 'N/A'}</span>,
+    },
+    {
+      header: 'Joined',
+      accessor: (u: User) => (
+        <span>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</span>
+      ),
+    },
     {
       header: 'Actions',
       accessor: (u: User) => (
