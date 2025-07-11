@@ -90,15 +90,12 @@ export const Sidebar = () => {
 
   return (
     <aside className="bg-white w-72 h-screen shadow-xl fixed top-0 left-0 z-40 border-r border-slate-200 overflow-y-auto">
-      <div className="p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#093FB4] to-[#093FB4] rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-lg">M</span>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">Meditime {roleTitle}</h2>
-            <p className="text-xs text-slate-500">{roleSubtitle}</p>
-          </div>
+      <div className="p-6 bg-white border-b border-gray-100 sticky top-0 z-10">
+        <div>
+          <h1 className="text-2xl font-semibold text-blue-800">Meditime</h1>
+          <p className="text-xs uppercase tracking-wider text-slate-400 mt-1">
+            {roleTitle} <span className="mx-1">•</span> {roleSubtitle}
+          </p>
         </div>
       </div>
 

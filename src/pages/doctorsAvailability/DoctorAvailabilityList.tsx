@@ -8,7 +8,6 @@ import { DoctorAvailabilityModal } from "./DoctorAvailabilityModal";
 import { doctorAvailabilityApi } from "../../feature/api/doctorAvailabilityApi";
 import { type Availability } from "../../types/types";
 
-
 interface MappedAvailability {
   availabilityId: number;
   doctorName: string;
@@ -24,17 +23,19 @@ export const DoctorAvailabilityList = () => {
   const isDoctor = user?.role === "doctor";
 
   const [showModal, setShowModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const { data: allData, isLoading: allLoading, error: allError } = 
+  const { data: allData, isLoading: allLoading, error: allError } =
     doctorAvailabilityApi.useGetAllDoctorAvailabilityQuery(undefined, { skip: !isAdmin });
 
-  const { data: doctorData, isLoading: doctorLoading, error: doctorError } = 
+  const { data: doctorData, isLoading: doctorLoading, error: doctorError } =
     doctorAvailabilityApi.useGetDoctorAvailabilityByDoctorIdQuery(user?.doctor?.doctorId ?? 0, { skip: !isDoctor });
 
-  const data: Availability[] = isAdmin 
-    ? allData?.availabilities ?? [] 
-    : isDoctor 
-      ? doctorData?.availabilities ?? [] 
+  const data: Availability[] = isAdmin
+    ? allData?.availabilities ?? []
+    : isDoctor
+      ? doctorData?.availabilities ?? []
       : [];
 
   const isLoading = isAdmin ? allLoading : isDoctor ? doctorLoading : false;
@@ -53,6 +54,13 @@ export const DoctorAvailabilityList = () => {
       slotDurationMinutes: item.slotDurationMinutes,
     }));
   }, [data]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return mappedAvailability.slice(startIndex, startIndex + itemsPerPage);
+  }, [mappedAvailability, currentPage]);
+
+  const totalPages = Math.ceil(mappedAvailability.length / itemsPerPage);
 
   const columns = useMemo(() => [
     { header: "Doctor", accessor: "doctorName" as keyof MappedAvailability },
@@ -87,12 +95,34 @@ export const DoctorAvailabilityList = () => {
       ) : mappedAvailability.length === 0 ? (
         <p className="text-gray-500 italic">No availabilities found.</p>
       ) : (
-        <Table<MappedAvailability>
-          columns={columns}
-          data={mappedAvailability}
-          selectable={false}
-          emptyText="No availabilities found."
-        />
+        <>
+          <Table<MappedAvailability>
+            columns={columns}
+            data={paginatedData}
+            selectable={false}
+            emptyText="No availabilities found."
+          />
+
+          <div className="flex justify-end mt-4 space-x-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <span className="px-2 py-1 text-sm text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage >= totalPages}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
 
       <Modal

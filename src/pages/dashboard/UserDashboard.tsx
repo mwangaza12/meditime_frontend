@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import { prescriptionApi } from '../../feature/api/prescriptionApi';
 
 dayjs.extend(isSameOrAfter);
 
@@ -47,9 +48,9 @@ export const UserDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user.userId;
 
-  console.log(userId);
-
   const { data: appointments = [], isLoading, isError } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
+  const { data: prescriptions = []} = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
+  console.log(prescriptions);
 
   const { upcomingAppointments, pastAppointments } = useMemo(() => {
     const now = dayjs();
@@ -75,8 +76,8 @@ export const UserDashboard = () => {
             iconColor="text-blue-600"
           />
           <StatCard
-            title="Health Score"
-            value="92%"
+            title="Total Amount Used"
+            value="Ksh. 200"
             subtitle="Excellent"
             icon={Heart}
             bgColor="bg-green-50"
@@ -84,7 +85,7 @@ export const UserDashboard = () => {
           />
           <StatCard
             title="Medications"
-            value={medications.length.toString()}
+            value={prescriptions.length.toString()}
             subtitle="Active prescriptions"
             icon={Pill}
             bgColor="bg-purple-50"

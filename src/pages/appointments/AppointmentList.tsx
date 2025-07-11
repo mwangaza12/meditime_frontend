@@ -12,8 +12,8 @@ interface Appointment {
   doctorName: string;
   date: string;
   time: string;
-  status: "scheduled" | "completed" | "cancelled" | "confirmed";
-  type: string;
+  status: "pending" | "cancelled" | "confirmed";
+  durationMinutes: number;
   totalAmount?: number;
 }
 
@@ -31,6 +31,8 @@ export const AppointmentList = () => {
     { page: 1, pageSize: 10 },
     { skip: !isAdmin }
   );
+
+  console.log(allData);
 
   const {data: doctorData = [],error: doctorError,isLoading: doctorLoading,} = appointmentApi.useGetAppointmentsByDoctorIdQuery(
       user?.userId ? { doctorId: user.userId } : skipToken,
@@ -50,16 +52,15 @@ export const AppointmentList = () => {
   const mapStatus = (status: string): Appointment["status"] => {
     switch (status?.toLowerCase()) {
       case "pending":
-      case "scheduled":
-        return "scheduled";
-      case "completed":
-        return "completed";
+        return "pending";
+      case "confirmed":
+        return "confirmed";
       case "cancelled":
         return "cancelled";
       case "confirmed":
         return "confirmed";
       default:
-        return "scheduled";
+        return "pending";
     }
   };
 
@@ -78,10 +79,8 @@ export const AppointmentList = () => {
 
   const getStatusBadge = (status: Appointment["status"]) => {
     switch (status) {
-      case "scheduled":
+      case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
       case "confirmed":
@@ -96,7 +95,7 @@ export const AppointmentList = () => {
     { header: "Doctor", accessor: "doctorName" as keyof Appointment },
     { header: "Date", accessor: (row: Appointment) => new Date(row.date).toLocaleDateString() },
     { header: "Time", accessor: "time" as keyof Appointment },
-    { header: "Type", accessor: "type" as keyof Appointment },
+    { header: "Duration", accessor: "durationMinutes" as keyof Appointment },
     { header: "Status", accessor: (row: Appointment) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(row.status)}`}>
           {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
