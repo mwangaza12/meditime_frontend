@@ -7,7 +7,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-hot-toast";
 import type { RootState } from "../../app/store";
 
-export const AppointmentModal = ({onClose,doctor,}: {onClose: () => void;doctor: any;}) => {
+export const AppointmentModal = ({
+  onClose,
+  doctor,
+}: {
+  onClose: () => void;
+  doctor: any;
+}) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState("");
 
@@ -133,6 +139,7 @@ export const AppointmentModal = ({onClose,doctor,}: {onClose: () => void;doctor:
 
   return (
     <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+      
       {/* Doctor Info */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
         <div className="flex items-start justify-between">
@@ -224,26 +231,36 @@ export const AppointmentModal = ({onClose,doctor,}: {onClose: () => void;doctor:
           )}
         </div>
 
-        {/* Time Slot */}
+        {/* Time Picker */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Select Time Slot
           </label>
-          <select
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
+          <DatePicker
+            selected={
+              selectedTime && selectedDate ? new Date(`${selectedDate}T${selectedTime}`) : null
+            }
+            onChange={(date: Date | null) => {
+              const timeString = date ? date.toTimeString().slice(0, 5) : "";
+              setSelectedTime(timeString);
+            }}
+            showTimeSelect
+            showTimeSelectOnly
+            timeIntervals={30}
+            timeCaption="Time"
+            dateFormat="h:mm aa"
+            includeTimes={availableTimeSlots.map((time) => {
+              const [hours, minutes] = time.split(":").map(Number);
+              const timeDate = new Date(selectedDate);
+              timeDate.setHours(hours, minutes, 0, 0);
+              return timeDate;
+            })}
             disabled={!selectedDate || availableTimeSlots.length === 0}
-          >
-            <option value="">
-              {!selectedDate ? "Select a date first" : "Choose a time slot"}
-            </option>
-            {availableTimeSlots.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-          </select>
+            placeholderText={
+              !selectedDate ? "Select a date first" : "Choose a time slot"
+            }
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+          />
           {selectedDate && availableTimeSlots.length === 0 && (
             <p className="text-sm text-red-500 mt-1">
               No available time slots for this date.

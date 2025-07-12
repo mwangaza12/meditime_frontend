@@ -53,8 +53,6 @@ export const AppointmentList = () => {
     switch (status?.toLowerCase()) {
       case "pending":
         return "pending";
-      case "confirmed":
-        return "confirmed";
       case "cancelled":
         return "cancelled";
       case "confirmed":
