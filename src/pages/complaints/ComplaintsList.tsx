@@ -1,6 +1,6 @@
 import { Table } from "../../components/table/Table";
 import { Spinner } from "../../components/loader/Spinner";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { complaintApi } from "../../feature/api/complaintApi";
 import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
@@ -18,8 +18,6 @@ interface Complaint {
 export const ComplaintsList = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
-
-  const [showModal, setShowModal] = useState(false);
 
   // Admin: fetch all complaints
   const { data: allComplaints = [], error: adminError, isLoading: adminLoading } = complaintApi.useGetAllComplaintsQuery(
