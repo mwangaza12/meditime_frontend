@@ -131,7 +131,7 @@ export const router = createBrowserRouter([
       {
         path: "browse-doctors",
         element: <BrowseDoctors />
-      }
+      },
     ],
   },
 

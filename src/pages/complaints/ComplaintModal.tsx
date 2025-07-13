@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
 import { complaintApi } from "../../feature/api/complaintApi";
 import toast from "react-hot-toast";
-import { User, Calendar, MessageSquare, FileText } from "lucide-react";  // ✅ Added FileText icon
+import { User, MessageSquare, FileText } from "lucide-react";
 
 type ComplaintForm = {
   userId: number;
@@ -13,12 +13,25 @@ type ComplaintForm = {
   description: string;
 };
 
-export const ComplaintModal = ({ onClose }: { onClose: () => void }) => {
+interface ComplaintModalProps {
+  appointmentId: string;
+  onClose: () => void;
+}
+
+export const ComplaintModal = ({ appointmentId, onClose }: ComplaintModalProps) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const { register, handleSubmit, formState: { errors, isValid, isSubmitting }, reset } = useForm<ComplaintForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isSubmitting },
+    reset,
+  } = useForm<ComplaintForm>({
     mode: "onChange",
-    defaultValues: { userId: user?.userId || 0 },
+    defaultValues: {
+      userId: user?.userId || 0,
+      relatedAppointmentId: Number(appointmentId),
+    },
   });
 
   const [createComplaint] = complaintApi.useCreateComplaintMutation();
@@ -58,19 +71,7 @@ export const ComplaintModal = ({ onClose }: { onClose: () => void }) => {
         value={user?.userId || ""}
       />
 
-      <TextInput
-        label="Appointment ID"
-        type="number"
-        placeholder="Appointment ID"
-        icon={<Calendar size={16} />}
-        name="relatedAppointmentId"
-        register={register("relatedAppointmentId", {
-          valueAsNumber: true,
-          required: "Appointment ID is required",
-          min: { value: 1, message: "Appointment ID must be positive" },
-        })}
-        error={errors.relatedAppointmentId?.message}
-      />
+      {/* Removed the appointment ID input — it's now passed and set internally */}
 
       <TextInput
         label="Subject"

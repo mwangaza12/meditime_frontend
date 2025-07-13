@@ -1,11 +1,9 @@
 import { Table } from "../../components/table/Table";
 import { Spinner } from "../../components/loader/Spinner";
-import { Modal } from "../../components/modal/Modal";
 import { useState, useMemo } from "react";
 import { complaintApi } from "../../feature/api/complaintApi";
 import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
-import { ComplaintModal } from "./ComplaintModal";
 
 interface Complaint {
   id: string;
@@ -110,18 +108,6 @@ export const ComplaintsList = () => {
             {isAdmin ? "Manage all patient complaints" : "View and submit your complaints"}
           </p>
         </div>
-
-        {!isAdmin && (
-          <button
-            onClick={() => setShowModal(true)}
-            disabled={showModal}
-            className={`bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition ${
-              showModal ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            + Create Complaint
-          </button>
-        )}
       </div>
 
       {isLoading ? (
@@ -140,15 +126,6 @@ export const ComplaintsList = () => {
           emptyText="No complaints found."
         />
       )}
-
-      <Modal
-        title="Create Complaint"
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        width="max-w-xl"
-      >
-        <ComplaintModal onClose={() => setShowModal(false)} />
-      </Modal>
     </div>
   );
 };

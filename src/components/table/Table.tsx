@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { clsx } from "clsx";
 
-interface Column<T> {
+export interface Column<T> {
   header: string;
-  accessor: keyof T | ((row: T) => React.ReactNode);
+  accessor?: keyof T | ((row: T) => React.ReactNode);
   className?: string;
   onHeaderClick?: () => void;
 }
@@ -78,7 +78,9 @@ export function Table<T>({
                 const content =
                   typeof col.accessor === "function"
                     ? col.accessor(row)
-                    : (row[col.accessor] as React.ReactNode);
+                    : col.accessor
+                    ? (row[col.accessor] as React.ReactNode)
+                    : null;
 
                 return (
                   <td key={colIndex} className="px-4 py-3 text-sm text-slate-700">
