@@ -198,16 +198,16 @@ export const AppointmentList = () => {
       {/* Modal at the root level */}
       {showModal && selectedAppointmentId && (
         <Modal
-  title="Create Complaint"
-  show={showModal}
-  onClose={() => setShowModal(false)}
-  width="max-w-xl"
->
-  <ComplaintModal
-    appointmentId={selectedAppointmentId}  // <-- Pass appointment ID here
-    onClose={() => setShowModal(false)}
-  />
-</Modal>
+          title="Create Complaint"
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          width="max-w-xl"
+        >
+          <ComplaintModal
+            appointmentId={selectedAppointmentId}  // <-- Pass appointment ID here
+            onClose={() => setShowModal(false)}
+          />
+        </Modal>
 
       )}
     </div>

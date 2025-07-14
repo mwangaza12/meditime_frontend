@@ -31,7 +31,7 @@ export const Sidebar = () => {
     },
     payment: {
       name: "Payments",
-      path: "/payments",
+      path: role === "doctor" ? "/doctor-dashboard/payments" : "/user-dashboard/payments",
       icon: FaMoneyBill,
       color: "from-orange-500 to-orange-700"
     },

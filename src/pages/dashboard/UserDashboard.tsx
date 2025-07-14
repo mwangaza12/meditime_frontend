@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { appointmentApi } from '../../feature/api/appointmentApi'; 
-import { Calendar, Clock, User, Bell, MapPin, Star, MessageSquare, FileText, Heart, Pill } from "lucide-react";
+import { Calendar, Clock, Bell, MapPin, Star, Heart, Pill } from "lucide-react";
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { prescriptionApi } from '../../feature/api/prescriptionApi';
+import { paymentApi } from '../../feature/api/paymentApi';
 
 dayjs.extend(isSameOrAfter);
 
@@ -50,7 +51,9 @@ export const UserDashboard = () => {
 
   const { data: appointments = [], isLoading, isError } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
   const { data: prescriptions = []} = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
-  console.log(prescriptions);
+  const { data: payments = []} = paymentApi.useGetPaymentsByUserIdQuery({userId});
+  console.log(payments);
+  
 
   const { upcomingAppointments, pastAppointments } = useMemo(() => {
     const now = dayjs();
@@ -137,7 +140,7 @@ export const UserDashboard = () => {
                 <div className="space-y-4">
                   {(activeTab === 'upcoming' ? upcomingAppointments : pastAppointments).map((appointment: any) => {
                     const doctorName = `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`;
-                    const specialty = appointment.doctor.specialization;
+                    const specialty = appointment.doctor.specialization.name;
                     const date = dayjs(appointment.appointmentDate).format('MMM D, YYYY');
                     const time = appointment.timeSlot;
                     const status = appointment.appointmentStatus;
@@ -226,24 +229,6 @@ export const UserDashboard = () => {
                     <p className="text-xs text-gray-500 mt-1">Next dose: {med.nextDose}</p>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="space-y-3">
-                <button className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Message Doctor</span>
-                </button>
-                <button className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700">
-                  <FileText className="w-4 h-4" />
-                  <span>View Lab Results</span>
-                </button>
-                <button className="w-full flex items-center justify-center space-x-2 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
-                  <User className="w-4 h-4" />
-                  <span>Update Profile</span>
-                </button>
               </div>
             </div>
           </div>

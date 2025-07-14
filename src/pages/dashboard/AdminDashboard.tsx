@@ -351,7 +351,7 @@ export const AdminDashboard = () => {
                         {appointment.user?.lastName}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {appointment.doctor?.specialization || 'Service'}
+                        {appointment.doctor?.specialization?.name || 'Service'}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">

@@ -19,6 +19,8 @@ import { PrescriptionList } from "../pages/prescriptions/PrescriptionList";
 import { SpecializationList } from "../pages/specializations/SpecializationList";
 import { DoctorAvailabilityList } from "../pages/doctorsAvailability/DoctorAvailabilityList";
 import { BrowseDoctors } from "../pages/doctors/BrowseDoctors";
+import { PaymentsList } from "../pages/payments/PaymentsList";
+import { Profile } from "../pages/settings/Profile";
 
 export const router = createBrowserRouter([
   {
@@ -98,6 +100,14 @@ export const router = createBrowserRouter([
       {
         path: "doctor-availability",
         element: <DoctorAvailabilityList />
+      },
+      {
+        path: "payments",
+        element: <PaymentsList />
+      },
+      {
+        path: "profile",
+        element: <Profile />,
       }
     ],
   },
@@ -132,6 +142,14 @@ export const router = createBrowserRouter([
         path: "browse-doctors",
         element: <BrowseDoctors />
       },
+      {
+        path: "payments",
+        element: <PaymentsList />
+      },
+      {
+        path: "profile",
+        element: <Profile />,
+      }
     ],
   },
 
@@ -156,6 +174,14 @@ export const router = createBrowserRouter([
       {
         path: "prescriptions",
         element: <PrescriptionList />
+      },
+      {
+        path: "payments",
+        element: <PaymentsList />
+      },
+      {
+        path: "profile",
+        element: <Profile />,
       }
     ],
   },

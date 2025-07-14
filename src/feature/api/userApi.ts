@@ -24,6 +24,7 @@ export const userApi = createApi({
                 body: registerPayload
             })
         }),
+
         loginUser: builder.mutation({
             query: (loginPayload) => ({
                 url: 'auth/login',
@@ -31,10 +32,12 @@ export const userApi = createApi({
                 body: loginPayload
             })
         }),
+
         getAllUsers: builder.query({
             query: ({ page, pageSize }) => `users?page=${page}&pageSize=${pageSize}`,
             providesTags: ["Users"],
         }),
+
         updateUser: builder.mutation({
             query: ({ id, ...body }) => ({
                 url: `users/${id}`,
@@ -58,6 +61,35 @@ export const userApi = createApi({
                 method: 'PUT',
                 body: emailVerificationPayload
             })
+        }),
+
+        getUserByUserId: builder.query({
+            query:({userId})=>({
+                url: `users/${userId}`,
+                method: 'GET',
+                providesTags: ["Users"],
+            })
+        }),
+
+        changePassword: builder.mutation({
+            query: ({ currentPassword, newPassword }) => ({
+                url: "users/change-password",
+                method: "POST",
+                body: { currentPassword, newPassword },
+            }),
+        }),
+
+        updateAvatar: builder.mutation({
+            query: (file: File) => {
+                const form = new FormData();
+                form.append("avatar", file);
+                return {
+                url: "users/upload-profile-pic",
+                method: "POST",
+                body: form,
+                };
+            },
+            invalidatesTags: ["Users"],
         }),
     })
 })

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { appointmentApi } from "../../feature/api/appointmentApi";
-import { User, Phone, Calendar, Clock } from "lucide-react";
+import { User, Phone, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-hot-toast";
@@ -16,8 +16,10 @@ export const AppointmentModal = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [fee, setFee] = useState<number>(0);
 
-  const [createAppointment, { isLoading }] = appointmentApi.useCreateAppointmentMutation();
+  const [createAppointment, { isLoading }] =
+    appointmentApi.useCreateAppointmentMutation();
   const user = useSelector((state: RootState) => state.auth.user);
   const userId = user?.id || user?.userId;
 
@@ -31,8 +33,8 @@ export const AppointmentModal = ({
   const getAvailableDates = () => {
     if (!doctor?.availability || !Array.isArray(doctor.availability)) return [];
 
-    const availableDays = doctor.availability.map((slot: any) =>
-      slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()
+    const availableDays = doctor.availability.map(
+      (slot: any) => slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()
     );
 
     const dates = [];
@@ -41,19 +43,17 @@ export const AppointmentModal = ({
     for (let i = 1; i <= 30; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-
-      const dayOfWeek = date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+      const dayOfWeek = getDayOfWeek(date.toISOString());
 
       if (availableDays.includes(dayOfWeek)) {
         dates.push({
-          value: date.toISOString().split('T')[0],
-          label: date.toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
+          value: date.toISOString().split("T")[0],
+          label: date.toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
           }),
-          dayOfWeek: dayOfWeek
         });
       }
     }
@@ -70,9 +70,12 @@ export const AppointmentModal = ({
     const end = new Date(0, 0, 0, endHour, endMinute);
 
     while (current < end) {
-      const hours = current.getHours().toString().padStart(2, "0");
-      const minutes = current.getMinutes().toString().padStart(2, "0");
-      slots.push(`${hours}:${minutes}`);
+      slots.push(
+        `${current.getHours().toString().padStart(2, "0")}:${current
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`
+      );
       current.setMinutes(current.getMinutes() + intervalMinutes);
     }
 
@@ -83,9 +86,9 @@ export const AppointmentModal = ({
     if (!selectedDate || !doctor?.availability) return [];
 
     const selectedDay = getDayOfWeek(selectedDate);
-
-    const dayAvailability = doctor.availability.filter((slot: any) =>
-      (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
+    const dayAvailability = doctor.availability.filter(
+      (slot: any) =>
+        (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
     );
 
     let allTimeSlots: string[] = [];
@@ -93,7 +96,6 @@ export const AppointmentModal = ({
     dayAvailability.forEach((slot: any) => {
       const startTime = slot.startTime || slot.start;
       const endTime = slot.endTime || slot.end;
-
       if (startTime && endTime) {
         const timeSlots = generateTimeSlots(startTime, endTime);
         allTimeSlots = [...allTimeSlots, ...timeSlots];
@@ -101,6 +103,19 @@ export const AppointmentModal = ({
     });
 
     return [...new Set(allTimeSlots)].sort();
+  };
+
+  const updateFee = (date: string, _time: string) => {
+    const selectedDay = getDayOfWeek(date);
+    const matchedSlot = doctor?.availability?.find((slot: any) =>
+      (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
+    );
+
+    if (matchedSlot?.amount) {
+      setFee(Number(matchedSlot.amount));
+    } else {
+      setFee(0);
+    }
   };
 
   const handleConfirm = async () => {
@@ -114,12 +129,39 @@ export const AppointmentModal = ({
       return;
     }
 
+    const selectedDay = getDayOfWeek(selectedDate);
+
+    const matchedSlot = doctor.availability.find((slot: any) => {
+      const dayMatch =
+        (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay;
+      const startTime = slot.startTime || slot.start;
+      const endTime = slot.endTime || slot.end;
+
+      if (!dayMatch || !startTime || !endTime) return false;
+
+      const [startHour, startMin] = startTime.split(":").map(Number);
+      const [endHour, endMin] = endTime.split(":").map(Number);
+      const [selHour, selMin] = selectedTime.split(":").map(Number);
+
+      const start = new Date(0, 0, 0, startHour, startMin);
+      const end = new Date(0, 0, 0, endHour, endMin);
+      const selected = new Date(0, 0, 0, selHour, selMin);
+
+      return selected >= start && selected < end;
+    });
+
+    if (!matchedSlot?.availabilityId) {
+      toast.error("Could not find matching availability for this time.");
+      return;
+    }
+
     const appointmentData = {
-      userId: userId,
+      userId,
       doctorId: doctor?.doctorId,
+      availabilityId: matchedSlot.availabilityId,
       appointmentDate: selectedDate,
       timeSlot: selectedTime,
-      totalAmount: doctor?.consultationFee?.toString() || "0",
+      totalAmount: fee.toString(),
     };
 
     try {
@@ -134,16 +176,14 @@ export const AppointmentModal = ({
 
   const availableDates = getAvailableDates();
   const availableTimeSlots = getAvailableTimeSlotsForDate();
-
   const availableDateObjects = availableDates.map((d) => new Date(d.value));
 
   return (
     <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-      
       {/* Doctor Info */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
+          <div>
             <h3 className="text-xl font-semibold text-blue-800 mb-2">
               Dr. {doctor?.user?.firstName} {doctor?.user?.lastName}
             </h3>
@@ -169,80 +209,46 @@ export const AppointmentModal = ({
 
           <div className="text-right">
             <p className="text-sm text-gray-600">Consultation Fee</p>
-            <p className="text-2xl font-bold text-green-600">
-              ${doctor?.consultationFee || 0}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-blue-200">
-          <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Available Schedule
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            {doctor?.availability?.length ? (
-              doctor.availability.map((slot: any, index: number) => (
-                <div
-                  key={index}
-                  className="flex justify-between bg-white bg-opacity-50 rounded px-2 py-1"
-                >
-                  <span className="font-medium text-blue-700">
-                    {slot.dayOfWeek || slot.day}:
-                  </span>
-                  <span className="text-gray-600">
-                    {slot.startTime || slot.start}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 italic col-span-2">
-                Schedule not available
-              </p>
-            )}
+            <p className="text-2xl font-bold text-green-600">${fee}</p>
           </div>
         </div>
       </div>
 
       {/* Appointment Form */}
       <div className="space-y-6">
-
-        {/* Date Picker */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Select Date
           </label>
           <DatePicker
             selected={selectedDate ? new Date(selectedDate) : null}
-            onChange={(date: Date | null) => {
-              const isoDate = date ? date.toISOString().split("T")[0] : "";
-              setSelectedDate(isoDate);
+            onChange={(date) => {
+              const iso = date?.toISOString().split("T")[0] || "";
+              setSelectedDate(iso);
               setSelectedTime("");
+              if (iso) updateFee(iso, "");
             }}
             includeDates={availableDateObjects}
             placeholderText="Choose an available date"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3"
             dateFormat="EEE, MMM d, yyyy"
           />
-          {availableDates.length === 0 && (
-            <p className="text-sm text-red-500 mt-1">
-              No available dates found for this doctor.
-            </p>
-          )}
         </div>
 
-        {/* Time Picker */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Select Time Slot
           </label>
           <DatePicker
             selected={
-              selectedTime && selectedDate ? new Date(`${selectedDate}T${selectedTime}`) : null
+              selectedTime && selectedDate
+                ? new Date(`${selectedDate}T${selectedTime}`)
+                : null
             }
-            onChange={(date: Date | null) => {
-              const timeString = date ? date.toTimeString().slice(0, 5) : "";
-              setSelectedTime(timeString);
+            onChange={(date) => {
+              const timeStr = date?.toTimeString().slice(0, 5) || "";
+              setSelectedTime(timeStr);
+              if (selectedDate && timeStr) updateFee(selectedDate, timeStr);
             }}
             showTimeSelect
             showTimeSelectOnly
@@ -250,25 +256,17 @@ export const AppointmentModal = ({
             timeCaption="Time"
             dateFormat="h:mm aa"
             includeTimes={availableTimeSlots.map((time) => {
-              const [hours, minutes] = time.split(":").map(Number);
-              const timeDate = new Date(selectedDate);
-              timeDate.setHours(hours, minutes, 0, 0);
-              return timeDate;
+              const [h, m] = time.split(":").map(Number);
+              const d = new Date(selectedDate);
+              d.setHours(h, m, 0, 0);
+              return d;
             })}
             disabled={!selectedDate || availableTimeSlots.length === 0}
-            placeholderText={
-              !selectedDate ? "Select a date first" : "Choose a time slot"
-            }
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+            placeholderText={!selectedDate ? "Select a date first" : "Choose a time slot"}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3"
           />
-          {selectedDate && availableTimeSlots.length === 0 && (
-            <p className="text-sm text-red-500 mt-1">
-              No available time slots for this date.
-            </p>
-          )}
         </div>
 
-        {/* Summary */}
         {selectedDate && selectedTime && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h4 className="font-semibold text-green-800 mb-2">Appointment Summary</h4>
@@ -276,12 +274,11 @@ export const AppointmentModal = ({
               <p><strong>Doctor:</strong> Dr. {doctor?.user?.firstName} {doctor?.user?.lastName}</p>
               <p><strong>Date:</strong> {availableDates.find(d => d.value === selectedDate)?.label}</p>
               <p><strong>Time:</strong> {selectedTime}</p>
-              <p><strong>Fee:</strong> ${doctor?.consultationFee || 0}</p>
+              <p><strong>Fee:</strong> ${fee}</p>
             </div>
           </div>
         )}
 
-        {/* Confirm Button */}
         <button
           onClick={handleConfirm}
           disabled={isLoading || !selectedDate || !selectedTime}

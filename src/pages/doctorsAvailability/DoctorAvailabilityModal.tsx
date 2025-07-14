@@ -1,6 +1,5 @@
 import { useForm, useFieldArray } from "react-hook-form";
-import { Clock, User, PlusCircle, Trash2 } from "lucide-react";
-import { TextInput } from "../../components/form/TextInput";
+import { PlusCircle, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
@@ -12,6 +11,7 @@ type AvailabilitySlot = {
   startTime: string;
   endTime: string;
   slotDurationMinutes: number;
+  amount: number;
 };
 
 type DoctorAvailabilityForm = {
@@ -20,14 +20,30 @@ type DoctorAvailabilityForm = {
 };
 
 const daysOfWeek = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
 ];
+
+const generateTimeSlots = (
+  startTime: string,
+  endTime: string,
+  intervalMinutes = 30
+) => {
+  const slots = [];
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const [endHour, endMinute] = endTime.split(":").map(Number);
+
+  let current = new Date(0, 0, 0, startHour, startMinute);
+  const end = new Date(0, 0, 0, endHour, endMinute);
+
+  while (current <= end) {
+    const hours = current.getHours().toString().padStart(2, "0");
+    const minutes = current.getMinutes().toString().padStart(2, "0");
+    slots.push(`${hours}:${minutes}`);
+    current.setMinutes(current.getMinutes() + intervalMinutes);
+  }
+
+  return slots;
+};
 
 export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -72,13 +88,14 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
         startTime: "",
         endTime: "",
         slotDurationMinutes: 0,
+        amount: 0,
       });
     } else {
       const indexesToRemove = fields
         .map((field, idx) => ({ day: field.dayOfWeek, idx }))
         .filter((entry) => entry.day === day)
         .map((entry) => entry.idx)
-        .reverse(); // Remove from end to avoid index shifting
+        .reverse();
       indexesToRemove.forEach((i) => remove(i));
     }
   };
@@ -89,6 +106,7 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
       startTime: "",
       endTime: "",
       slotDurationMinutes: 0,
+      amount: 0,
     });
   };
 
@@ -106,15 +124,21 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
       return;
     }
 
+    const fixedAvailabilities = data.availabilities.map((slot) => {
+      const slotDurationMinutes = calculateDuration(slot.startTime, slot.endTime);
+      return { ...slot, slotDurationMinutes };
+    });
+
     const loadingToast = toast.loading("Saving availability...");
     try {
-      for (const slot of data.availabilities) {
+      for (const slot of fixedAvailabilities) {
         const payload = {
           doctorId: data.doctorId,
           dayOfWeek: slot.dayOfWeek,
           startTime: slot.startTime,
           endTime: slot.endTime,
           slotDurationMinutes: slot.slotDurationMinutes,
+          amount: slot.amount,
         };
 
         if (!payload.startTime || !payload.endTime || payload.slotDurationMinutes <= 0) {
@@ -137,6 +161,7 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
     }
   };
 
+  const timeOptions = generateTimeSlots("06:00", "18:00");
   const selectedDays = [...new Set(watchedAvailabilities.map((a) => a.dayOfWeek))];
 
   return (
@@ -144,20 +169,21 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
       <h2 className="text-lg font-semibold mb-4 text-gray-800">Set Doctor Availability</h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-        <TextInput
-          label="Doctor ID"
-          type="number"
-          placeholder="Doctor ID"
-          icon={<User size={16} />}
-          name="doctorId"
-          register={register("doctorId", {
-            valueAsNumber: true,
-            required: "Doctor ID is required",
-            min: { value: 1, message: "Doctor ID must be positive" },
-          })}
-          error={errors.doctorId?.message}
-        />
+        <div className="mb-4">
+          <label className="text-sm font-medium text-gray-700">Doctor ID</label>
+          <input
+            type="number"
+            className="w-full mt-1 border px-3 py-2 rounded"
+            {...register("doctorId", {
+              valueAsNumber: true,
+              required: "Doctor ID is required",
+              min: { value: 1, message: "Doctor ID must be positive" },
+            })}
+          />
+          {errors.doctorId && (
+            <p className="text-sm text-red-500 mt-1">{errors.doctorId.message}</p>
+          )}
+        </div>
 
         <div className="grid grid-cols-3 gap-2">
           {daysOfWeek.map((day) => (
@@ -184,10 +210,9 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
 
         {fields.map((field, index) => {
           const currentAvailability = watchedAvailabilities[index];
-          const duration = currentAvailability ? calculateDuration(
-            currentAvailability.startTime,
-            currentAvailability.endTime
-          ) : 0;
+          const duration = currentAvailability
+            ? calculateDuration(currentAvailability.startTime, currentAvailability.endTime)
+            : 0;
 
           return (
             <div key={field.id} className="border rounded-lg p-3 mt-4 bg-gray-50 space-y-2">
@@ -202,25 +227,63 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
                 </button>
               </div>
 
-              <TextInput
-                label="Start Time"
-                type="time"
-                placeholder="Start Time"
-                name={`availabilities.${index}.startTime`}
-                icon={<Clock size={16} />}
-                register={register(`availabilities.${index}.startTime`, { required: "Required" })}
-                error={errors.availabilities?.[index]?.startTime?.message}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                <select
+                  {...register(`availabilities.${index}.startTime`, { required: "Required" })}
+                  className="w-full mt-1 border px-3 py-2 rounded"
+                >
+                  <option value="">Select time</option>
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+                {errors.availabilities?.[index]?.startTime && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.availabilities[index].startTime?.message}
+                  </p>
+                )}
+              </div>
 
-              <TextInput
-                label="End Time"
-                type="time"
-                placeholder="End Time"
-                name={`availabilities.${index}.endTime`}
-                icon={<Clock size={16} />}
-                register={register(`availabilities.${index}.endTime`, { required: "Required" })}
-                error={errors.availabilities?.[index]?.endTime?.message}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700">End Time</label>
+                <select
+                  {...register(`availabilities.${index}.endTime`, { required: "Required" })}
+                  className="w-full mt-1 border px-3 py-2 rounded"
+                >
+                  <option value="">Select time</option>
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+                {errors.availabilities?.[index]?.endTime && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.availabilities[index].endTime?.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Amount (kes)</label>
+                <input
+                  type="number"
+                  {...register(`availabilities.${index}.amount`, {
+                    required: "Amount is required",
+                    min: { value: 0, message: "Amount must be non-negative" },
+                    valueAsNumber: true,
+                  })}
+                  className="w-full mt-1 border px-3 py-2 rounded"
+                />
+                {errors.availabilities?.[index]?.amount && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.availabilities[index].amount?.message}
+                  </p>
+                )}
+              </div>
 
               <div className="text-sm text-gray-700">
                 Slot Duration:{" "}
@@ -236,7 +299,9 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
           type="submit"
           disabled={isSubmitting}
           className={`w-full py-2 rounded-lg font-semibold text-white ${
-            isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 shadow"
+            isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 shadow"
           }`}
         >
           {isSubmitting ? "Saving..." : "Save Availability"}

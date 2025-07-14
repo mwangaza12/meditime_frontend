@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { User, Briefcase, Phone } from "lucide-react";
+import { User, Briefcase } from "lucide-react";
 import { TextInput } from "../../components/form/TextInput";
 import { Modal } from "../../components/modal/Modal";
 import toast from "react-hot-toast";
@@ -10,7 +10,6 @@ import { useEffect } from "react";
 type DoctorForm = {
   userId: number;
   specializationId: number;
-  contactPhone: string;
 };
 
 interface DoctorModalProps {
@@ -31,7 +30,6 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
     defaultValues: {
       userId: initialData?.userId ?? undefined,
       specializationId: initialData?.specializationId ?? undefined,
-      contactPhone: initialData?.contactPhone ?? "",
     },
   });
 
@@ -49,7 +47,6 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
       reset({
         userId: initialData.userId ?? undefined,
         specializationId: initialData.specializationId ?? undefined,
-        contactPhone: initialData.contactPhone ?? "",
       });
     } else {
       reset();
@@ -134,19 +131,6 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
             <p className="text-red-500 text-sm">{errors.specializationId.message}</p>
           )}
         </div>
-
-        {/* Contact Phone */}
-        <TextInput
-          label="Contact Phone"
-          type="text"
-          placeholder="Enter Contact Phone"
-          icon={<Phone size={16} />}
-          name="contactPhone"
-          register={register("contactPhone", {
-            required: "Contact phone is required",
-          })}
-          error={errors.contactPhone?.message}
-        />
 
         {/* Submit Button */}
         <button

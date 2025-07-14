@@ -16,6 +16,23 @@ export const Header = ({ currentSection }: { currentSection: string }) => {
     navigate("/login");
   };
 
+  const handleProfile = () => {
+    if (!user?.role) return;
+    switch (user.role) {
+      case "admin":
+        navigate("/dashboard/profile");
+        break;
+      case "doctor":
+        navigate("/doctor-dashboard/profile");
+        break;
+      case "user":
+        navigate("/user-dashboard/profile");
+        break;
+      default:
+        navigate("/profile");
+    }
+  };
+
   return (
     <header className="w-full bg-gradient-to-r from-slate-50 to-white backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
       {/* Left Section */}
@@ -68,6 +85,7 @@ export const Header = ({ currentSection }: { currentSection: string }) => {
                 <Menu.Item>
                   {({ active }) => (
                     <button
+                      onClick={handleProfile}
                       className={`${
                         active ? "bg-blue-50" : ""
                       } group flex items-center w-full px-4 py-2 text-sm text-slate-700`}
