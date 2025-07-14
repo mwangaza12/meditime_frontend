@@ -9,13 +9,13 @@ import { paymentApi } from "../../feature/api/paymentApi";
 
 interface Payment {
   id: string;
-  patientName: string;
-  doctorName: string;
-  doctorSpecialization: string;
   amount: number;
   status: "pending" | "completed" | "failed";
   date: string;
   appointmentDate: string;
+  patientName: string;
+  doctorName: string;
+  doctorSpecialization: string;
 }
 
 export const PaymentsList = () => {
@@ -28,21 +28,18 @@ export const PaymentsList = () => {
 
   const queryParams = { page, pageSize };
 
-  const {
-    data = [],
-    error,
-    isLoading,
-  } =
-    isAdmin
-      ? paymentApi.useGetAllPaymentsQuery(queryParams)
-      : isDoctor
-      ? paymentApi.useGetPaymentsByDoctorIdQuery(
-          user?.userId ? { doctorId: user.userId } : skipToken
-        )
-      : paymentApi.useGetPaymentsByUserIdQuery(
-          user?.userId ? { userId: user.userId, ...queryParams } : skipToken,
-          { skip: !user }
-        );
+  const { data = [], error, isLoading } = isAdmin
+    ? paymentApi.useGetAllPaymentsQuery(queryParams)
+    : isDoctor
+    ? paymentApi.useGetPaymentsByDoctorIdQuery(
+        user?.userId ? { doctorId: user.userId } : skipToken
+      )
+    : paymentApi.useGetPaymentsByUserIdQuery(
+        user?.userId ? { userId: user.userId, ...queryParams } : skipToken,
+        { skip: !user }
+      );
+
+    console.log(data);
 
   const mappedPayments: Payment[] = useMemo(() => {
     return data.map((payment: any) => ({
@@ -54,11 +51,17 @@ export const PaymentsList = () => {
         ? `${payment.appointment.doctor.user.firstName} ${payment.appointment.doctor.user.lastName}`
         : "N/A",
       doctorSpecialization:
-        payment.appointment?.doctor?.specialization?.name || "N/A",
+        payment.appointment?.doctor?.specialization?.name ||
+        (payment.appointment?.doctor?.specializationId
+          ? `Specialization ID: ${payment.appointment.doctor.specialization.name}`
+          : "N/A"),
       amount: Number(payment.amount),
       status: payment.paymentStatus || "pending",
       date: payment.createdAt || "",
-      appointmentDate: payment.appointment?.appointmentDate || "N/A",
+      appointmentDate:
+        payment.appointment?.appointmentDate ||
+        payment.appointment?.createdAt ||
+        "N/A",
     }));
   }, [data]);
 
@@ -82,15 +85,19 @@ export const PaymentsList = () => {
       { header: "Specialization", accessor: "doctorSpecialization" },
       {
         header: "Appointment Date",
-        accessor: (row) => new Date(row.appointmentDate).toLocaleDateString(),
+        accessor: (row) =>
+          row.appointmentDate !== "N/A"
+            ? new Date(row.appointmentDate).toLocaleDateString()
+            : "N/A",
       },
       {
         header: "Paid On",
-        accessor: (row) => new Date(row.date).toLocaleDateString(),
+        accessor: (row) =>
+          row.date ? new Date(row.date).toLocaleDateString() : "N/A",
       },
       {
         header: "Amount",
-        accessor: (row) => `Ksh. ${row.amount.toFixed(2)}`,
+        accessor: (row) => `$. ${row.amount.toFixed(2)}`,
       },
       {
         header: "Status",
@@ -100,7 +107,7 @@ export const PaymentsList = () => {
               row.status
             )}`}
           >
-            {row.status?.charAt(0).toUpperCase() + row.status.slice(1)}
+            {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
           </span>
         ),
       },
@@ -115,7 +122,7 @@ export const PaymentsList = () => {
 
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setPageSize(Number(e.target.value));
-    setPage(1); // reset to first page on size change
+    setPage(1);
   };
 
   return (
@@ -123,21 +130,23 @@ export const PaymentsList = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Payments</h1>
-          <p className="text-gray-600">View all payments associated with your appointments</p>
+          <p className="text-gray-600">
+            View all payments associated with your appointments
+          </p>
         </div>
         <div className="flex items-center space-x-2">
-              <label className="text-sm text-slate-600">Page Size:</label>
-              <select
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                className="border rounded px-2 py-1 text-sm"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
+          <label className="text-sm text-slate-600">Page Size:</label>
+          <select
+            value={pageSize}
+            onChange={handlePageSizeChange}
+            className="border rounded px-2 py-1 text-sm"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -164,9 +173,7 @@ export const PaymentsList = () => {
               Previous
             </button>
 
-            <span className="text-gray-700">
-              Page {page}
-            </span>
+            <span className="text-gray-700">Page {page}</span>
 
             <button
               onClick={() => handlePageChange(page + 1)}

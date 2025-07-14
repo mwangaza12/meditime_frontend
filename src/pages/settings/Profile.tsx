@@ -9,6 +9,8 @@ export const Profile = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { data: userData = {}, refetch } = userApi.useGetUserByUserIdQuery({ userId: user.userId });
 
+  console.log(userData);
+
   const [updateAvatar] = userApi.useUpdateAvatarMutation();
   const [changePassword] = userApi.useChangePasswordMutation();
 
@@ -33,7 +35,6 @@ export const Profile = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto bg-gray-50 min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
         <p className="text-gray-600">View and manage your profile details.</p>
       </div>
 
@@ -41,7 +42,7 @@ export const Profile = () => {
         <div className="flex flex-col items-center lg:items-start lg:w-1/3">
           <div className="relative mb-6">
             <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-700 to-blue-800 text-white text-4xl font-bold shadow-xl flex items-center justify-center ring-4 ring-blue-100">
-              {user?.name?.[0] || "U"}
+              {user?.firstName?.[0] || "U"}
             </div>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
             <button

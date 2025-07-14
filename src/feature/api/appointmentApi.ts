@@ -47,7 +47,16 @@ export const appointmentApi = createApi({
                 body: appointmentPayload
             }),
             invalidatesTags: ['Appointments']
-        })
+        }),
+
+        changeAppointmentStatus: builder.mutation({
+            query: ({ appointmentId, status }) => ({
+                url: `/appointments/${appointmentId}/status`,
+                method: "PATCH",
+                body: { status },
+            }),
+            invalidatesTags: ["Appointments"],
+        }),
 
     })
 

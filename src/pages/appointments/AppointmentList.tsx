@@ -9,6 +9,7 @@ import { appointmentApi } from "../../feature/api/appointmentApi";
 import { StripeCheckoutButton } from "../payments/StripeCheckoutButton";
 import { Modal } from "../../components/modal/Modal";
 import { ComplaintModal } from "../complaints/ComplaintModal";
+import toast from "react-hot-toast";
 
 interface Appointment {
   id: string;
@@ -56,6 +57,8 @@ export const AppointmentList = () => {
     user?.userId ? { userId: user.userId } : skipToken,
     { skip: isAdmin || isDoctor }
   );
+
+  const [changeStatus] = appointmentApi.useChangeAppointmentStatusMutation();
 
   const data = isAdmin ? allData : isDoctor ? doctorData : userData;
   const isLoading = isAdmin ? allLoading : isDoctor ? doctorLoading : userLoading;
@@ -108,68 +111,101 @@ export const AppointmentList = () => {
     setShowModal(true);
   };
 
-  const columns: Column<Appointment>[] = useMemo(() => [
-    { header: "Patient", accessor: "patientName" },
-    { header: "Doctor", accessor: "doctorName" },
-    {
-      header: "Date",
-      accessor: (row) => new Date(row.date).toLocaleDateString(),
-    },
-    { header: "Time", accessor: "time" },
-    { header: "Duration", accessor: "durationMinutes" },
-    {
-      header: "Status",
-      accessor: (row) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
-            row.status
-          )}`}
-        >
-          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-        </span>
-      ),
-    },
-    {
-      header: "Amount",
-      accessor: (row) =>
-        typeof row.totalAmount === "number" ? `Ksh. ${row.totalAmount}` : "N/A",
-    },
-    {
-      header: "Pay",
-      accessor: (row) => {
-        const isUser = !isAdmin && !isDoctor;
-        const canPay =
-          isUser &&
-          row.status === "pending" &&
-          typeof row.totalAmount === "number" &&
-          !row.isPaid;
+  const handleStatusChange = async (appointmentId: string, newStatus: Appointment["status"]) => {
+    try {
+      const response = await changeStatus({ appointmentId, status: newStatus }).unwrap();
 
-        return canPay ? (
-          <StripeCheckoutButton amount={row.totalAmount!} appointmentId={row.id} />
-        ) : row.isPaid ? (
-          <span className="text-green-600 font-medium italic">Paid</span>
-        ) : (
-          <span className="text-gray-400 italic">N/A</span>
-        );
+      // Show backend message
+      toast.success(response.message || "Status updated successfully");
+    } catch (err: any) {
+      console.error("Failed to update status:", err);
+
+      // Show backend error if available
+      const errorMessage =
+        err?.data?.message || err?.error || "Failed to update appointment status";
+      toast.error(errorMessage);
+    }
+  };
+
+
+  const columns: Column<Appointment>[] = useMemo(() => {
+    const baseColumns: Column<Appointment>[] = [
+      { header: "Patient", accessor: "patientName" },
+      { header: "Doctor", accessor: "doctorName" },
+      {
+        header: "Date",
+        accessor: (row) => new Date(row.date).toLocaleDateString(),
       },
-    },
-    {
-      header: "Complaint",
-      accessor: (row) => {
-        const isUser = !isAdmin && !isDoctor;
-        return isUser ? (
+      { header: "Time", accessor: "time" },
+      { header: "Duration", accessor: "durationMinutes" },
+      {
+        header: "Status",
+        accessor: isDoctor
+          ? (row) => (
+              <select
+                value={row.status}
+                onChange={(e) =>
+                  handleStatusChange(row.id, e.target.value as Appointment["status"])
+                }
+                className="border rounded px-2 py-1 text-sm"
+              >
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            )
+          : (row) => (
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
+                  row.status
+                )}`}
+              >
+                {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+              </span>
+            ),
+      },
+      {
+        header: "Amount",
+        accessor: (row) =>
+          typeof row.totalAmount === "number" ? `Ksh. ${row.totalAmount}` : "N/A",
+      },
+      {
+        header: "Pay",
+        accessor: (row) => {
+          const isUser = !isAdmin && !isDoctor;
+          const canPay =
+            isUser &&
+            row.status === "pending" &&
+            typeof row.totalAmount === "number" &&
+            !row.isPaid;
+
+          return canPay ? (
+            <StripeCheckoutButton amount={row.totalAmount!} appointmentId={row.id} />
+          ) : row.isPaid ? (
+            <span className="text-green-600 font-medium italic">Paid</span>
+          ) : (
+            <span className="text-gray-400 italic">N/A</span>
+          );
+        },
+      },
+    ];
+
+    if (!isAdmin && !isDoctor) {
+      baseColumns.push({
+        header: "Complaint",
+        accessor: (row) => (
           <button
             onClick={() => handleOpenComplaint(row.id)}
             className="text-sm px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
           >
             Raise Complaint
           </button>
-        ) : (
-          <span className="text-gray-400 italic">N/A</span>
-        );
-      },
-    },
-  ], [isAdmin, isDoctor]);
+        ),
+      });
+    }
+
+    return baseColumns;
+  }, [isAdmin, isDoctor]);
 
   return (
     <div className="p-6">
@@ -195,7 +231,6 @@ export const AppointmentList = () => {
         />
       )}
 
-      {/* Modal at the root level */}
       {showModal && selectedAppointmentId && (
         <Modal
           title="Create Complaint"
@@ -204,11 +239,10 @@ export const AppointmentList = () => {
           width="max-w-xl"
         >
           <ComplaintModal
-            appointmentId={selectedAppointmentId}  // <-- Pass appointment ID here
+            appointmentId={selectedAppointmentId}
             onClose={() => setShowModal(false)}
           />
         </Modal>
-
       )}
     </div>
   );
