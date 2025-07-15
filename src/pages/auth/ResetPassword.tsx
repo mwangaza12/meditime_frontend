@@ -1,13 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
+import { userApi } from "../../feature/api/userApi";
+import toast from "react-hot-toast";
 
 export const ResetPassword = () => {
   const { token } = useParams<{ token: string }>();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const navigate = useNavigate();
+
+  const [updatePassword] = userApi.useUpdatePasswordMutation();
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,16 +19,11 @@ export const ResetPassword = () => {
     }
 
     try {
-      setLoading(true);
-      await axios.put(`http://localhost:5000/api/auth/reset/${token}`, {
-        password,
-      });
-      alert("Password reset successfully. Please login.");
+      await updatePassword({ token, password }).unwrap();
+      toast.success("Password reset successfully. Please login.");
       navigate("/login");
     } catch (err: any) {
-      alert(err?.response?.data?.error || "Reset failed");
-    } finally {
-      setLoading(false);
+      alert(err?.data?.error || "Reset failed");
     }
   };
 
