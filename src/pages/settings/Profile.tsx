@@ -11,12 +11,14 @@ export const Profile = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { data: userData } = userApi.useGetUserByUserIdQuery({ userId: user.userId });
   const [updateAvatar] = userApi.useUpdateAvatarMutation();
+  const [changePassword] = userApi.useChangePasswordMutation();
 
   const cloud_name = "dbhok4lft";
   const preset_key = "meditime";
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,14 +41,21 @@ export const Profile = () => {
 
     const loadingToastId = toast.loading("Uploading image...");
     setUploading(true);
+    setUploadProgress(0);
 
     try {
       const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
-        formData
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            setUploadProgress(percent);
+          },
+        }
       );
-      const profileUrl = response.data.secure_url;
 
+      const profileUrl = response.data.secure_url;
       await updateAvatar({ id: user.userId, profileUrl });
 
       toast.success("Profile updated successfully!", { id: loadingToastId });
@@ -79,7 +88,19 @@ export const Profile = () => {
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
+              {uploading && (
+                <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center rounded-2xl">
+                  <div className="w-20 h-2 bg-gray-300 rounded-full overflow-hidden">
+                    <div
+                      className="bg-blue-500 h-full transition-all duration-200"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-white text-xs mt-2">{uploadProgress}%</span>
+                </div>
+              )}
             </div>
+
             <input
               type="file"
               ref={fileInputRef}
@@ -88,8 +109,13 @@ export const Profile = () => {
               onChange={handleFileChange}
             />
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-2 -right-2 bg-blue-800 hover:bg-blue-900 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              disabled={uploading}
+              className={`absolute -bottom-2 -right-2 p-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 ${
+                uploading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-800 hover:bg-blue-900 text-white"
+              }`}
             >
               <Upload className="w-4 h-4" />
             </button>
@@ -132,15 +158,11 @@ export const Profile = () => {
         onClose={() => setIsPasswordOpen(false)}
         onSubmit={async (currentPassword: string, newPassword: string) => {
           try {
-            await axios.post("http://localhost:3000/users/change-password", {
-              currentPassword,
-              newPassword,
-              userId: user.userId,
-            });
+            await changePassword({ id: user.userId, currentPassword, newPassword }).unwrap();
             toast.success("Password updated successfully.");
             setIsPasswordOpen(false);
-          } catch {
-            toast.error("Failed to update password.");
+          } catch (err: any) {
+            toast.error(err?.data?.error || "Failed to update password.");
           }
         }}
       />
@@ -160,6 +182,13 @@ const ProfileField = ({ label, value }: { label: string; value?: string }) => (
 const PasswordChangeModal = ({ open, onClose, onSubmit }: any) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      setCurrentPassword("");
+      setNewPassword("");
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">

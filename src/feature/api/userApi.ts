@@ -74,9 +74,9 @@ export const userApi = createApi({
         }),
 
         changePassword: builder.mutation({
-            query: ({ currentPassword, newPassword }) => ({
-                url: "users/change-password",
-                method: "POST",
+            query: ({ id, currentPassword, newPassword }) => ({
+                url: `users/${id}/password-reset`,
+                method: "PATCH",
                 body: { currentPassword, newPassword },
             }),
         }),
