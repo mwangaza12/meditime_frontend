@@ -5,11 +5,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import type { RootState } from "../../app/store";
 import { clearCredentials } from "../../feature/auth/authSlice";
+import { userApi } from "../../feature/api/userApi";
 
 export const Header = ({ currentSection }: { currentSection: string }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { data } = userApi.useGetUserByUserIdQuery({ userId: user.userId });
 
   const handleLogout = () => {
     dispatch(clearCredentials(user));
@@ -57,14 +59,21 @@ export const Header = ({ currentSection }: { currentSection: string }) => {
       <div className="flex items-center space-x-4">
         <Menu as="div" className="relative inline-block text-left">
           <Menu.Button className="flex items-center space-x-2 pl-4 border-l border-slate-200 focus:outline-none">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#093FB4] to-[#0B3A85] rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-white text-sm font-medium">
-                {user?.name?.[0] || "A"}
-              </span>
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 shadow-sm">
+              <img
+                src={
+                  data?.profileImageUrl ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    data?.firstName || "U"
+                  )}&background=0B3A85&color=fff&size=128`
+                }
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="hidden sm:block text-left">
               <div className="text-sm font-semibold text-slate-800">
-                {user?.name}
+                {data?.firstName} {data?.lastName}
               </div>
               <div className="text-xs text-slate-500">{user?.email}</div>
             </div>
