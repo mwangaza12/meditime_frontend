@@ -21,6 +21,8 @@ import { DoctorAvailabilityList } from "../pages/doctorsAvailability/DoctorAvail
 import { BrowseDoctors } from "../pages/doctors/BrowseDoctors";
 import { PaymentsList } from "../pages/payments/PaymentsList";
 import { Profile } from "../pages/settings/Profile";
+import { ForgotPassword } from "../pages/auth/ForgotPassword";
+import { ResetPassword } from "../pages/auth/ResetPassword";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +58,16 @@ export const router = createBrowserRouter([
   {
     path: "browse-doctors",
     element: <BrowseDoctors />,
+    errorElement: <Error />,
+  },
+  {
+    path: "forgot-password",
+    element: <ForgotPassword />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/reset-password/:token",
+    element: <ResetPassword />,
     errorElement: <Error />,
   },
 

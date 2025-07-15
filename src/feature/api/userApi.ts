@@ -89,5 +89,21 @@ export const userApi = createApi({
             }),
             invalidatesTags: ["Users"],
         }),
+
+        forgotPassword: builder.mutation({
+            query: (email) => ({
+                url: "auth/password-reset",
+                method: 'POST',
+                body: email
+            })
+        }),
+
+        updatePassword: builder.mutation({
+            query: ({ id, currentPassword, newPassword }) => ({
+                url: `auth/reset/:token`,
+                method: "PUT",
+                body: { newPassword },
+            }),
+        }),
     })
 })

@@ -12,15 +12,15 @@ export const Profile = () => {
   const { data: userData } = userApi.useGetUserByUserIdQuery({ userId: user.userId });
   const [updateAvatar] = userApi.useUpdateAvatarMutation();
   const [changePassword] = userApi.useChangePasswordMutation();
-
-  const cloud_name = "dbhok4lft";
-  const preset_key = "meditime";
-
+  
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-
+  
+  
+  const cloud_name = "dbhok4lft";
+  const preset_key = "meditime";
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const profilePicture =
