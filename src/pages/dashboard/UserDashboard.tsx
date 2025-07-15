@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { appointmentApi } from '../../feature/api/appointmentApi'; 
+import { appointmentApi } from '../../feature/api/appointmentApi';
 import { Calendar, Clock, Bell, MapPin, Star, Heart, Pill } from "lucide-react";
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
@@ -29,7 +29,7 @@ const notifications = [
   { id: 3, message: "Time to take your medication: Metformin", time: "3 hours ago", type: "medication" }
 ];
 
-const StatCard = ({title,value,subtitle,icon: Icon,bgColor,iconColor}: {title: string;value: string;subtitle?: string;icon: React.ElementType; bgColor: string;iconColor: string;}) => (
+const StatCard = ({ title, value, subtitle, icon: Icon, bgColor, iconColor }: {title: string;value: string;subtitle?: string;icon: React.ElementType;bgColor: string;iconColor: string;}) => (
   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
     <div className="flex items-center justify-between">
       <div>
@@ -50,10 +50,8 @@ export const UserDashboard = () => {
   const userId = user.userId;
 
   const { data: appointments = [], isLoading, isError } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
-  const { data: prescriptions = []} = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
-  const { data: payments = []} = paymentApi.useGetPaymentsByUserIdQuery({userId});
-  console.log(payments);
-  
+  const { data: prescriptions = [] } = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
+  const { data: payments = [] } = paymentApi.useGetPaymentsByUserIdQuery({ userId });
 
   const { upcomingAppointments, pastAppointments } = useMemo(() => {
     const now = dayjs();
@@ -63,6 +61,13 @@ export const UserDashboard = () => {
   }, [appointments]);
 
   const nextAppointment = upcomingAppointments[0];
+
+  const totalAmountUsed = useMemo(() => {
+    return payments?.reduce((sum: number, payment: any) => {
+      const amount = parseFloat(payment.totalAmount || '0');
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
+  }, [payments]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -80,7 +85,7 @@ export const UserDashboard = () => {
           />
           <StatCard
             title="Total Amount Used"
-            value="Ksh. 200"
+            value={`Ksh. ${totalAmountUsed.toLocaleString()}`}
             subtitle="Excellent"
             icon={Heart}
             bgColor="bg-green-50"
@@ -203,6 +208,7 @@ export const UserDashboard = () => {
             </div>
           </div>
 
+          {/* Notifications & Medications */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Notifications</h2>
@@ -232,6 +238,7 @@ export const UserDashboard = () => {
               </div>
             </div>
           </div>
+
         </div>
 
       </div>
