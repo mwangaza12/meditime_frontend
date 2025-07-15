@@ -39,30 +39,60 @@ export const PaymentsList = () => {
         { skip: !user }
       );
 
-    console.log(data);
-
   const mappedPayments: Payment[] = useMemo(() => {
-    return data.map((payment: any) => ({
-      id: String(payment.paymentId),
-      patientName: payment.appointment?.user
-        ? `${payment.appointment.user.firstName} ${payment.appointment.user.lastName}`
-        : "N/A",
-      doctorName: payment.appointment?.doctor?.user
-        ? `${payment.appointment.doctor.user.firstName} ${payment.appointment.doctor.user.lastName}`
-        : "N/A",
-      doctorSpecialization:
-        payment.appointment?.doctor?.specialization?.name ||
-        (payment.appointment?.doctor?.specializationId
-          ? `Specialization ID: ${payment.appointment.doctor.specialization.name}`
-          : "N/A"),
-      amount: Number(payment.amount),
-      status: payment.paymentStatus || "pending",
-      date: payment.createdAt || "",
-      appointmentDate:
-        payment.appointment?.appointmentDate ||
-        payment.appointment?.createdAt ||
-        "N/A",
-    }));
+    const records = data?.data || data || [];
+
+    return Array.isArray(records)
+      ? records.flatMap((record: any) => {
+          // For admin: root-level payment object with embedded appointment
+          if (record.appointment) {
+            const appointment = record.appointment;
+            const patientUser = appointment?.user;
+            const doctorUser = appointment?.doctor?.user;
+            const specialization = appointment?.doctor?.specialization;
+
+            return [
+              {
+                id: String(record.paymentId),
+                patientName: patientUser
+                  ? `${patientUser.firstName} ${patientUser.lastName}`
+                  : "N/A",
+                doctorName: doctorUser
+                  ? `${doctorUser.firstName} ${doctorUser.lastName}`
+                  : "N/A",
+                doctorSpecialization: specialization?.name || "N/A",
+                amount: Number(record.amount),
+                status: record.paymentStatus || "pending",
+                date: record.createdAt || "",
+                appointmentDate:
+                  appointment?.appointmentDate || appointment?.createdAt || "N/A",
+              },
+            ];
+          }
+
+          // For doctor or user: appointment object with payments[]
+          const appointment = record;
+          const patientUser = appointment?.user;
+          const doctorUser = appointment?.doctor?.user;
+          const specialization = appointment?.doctor?.specialization;
+
+          return (appointment.payments || []).map((payment: any) => ({
+            id: String(payment.paymentId),
+            patientName: patientUser
+              ? `${patientUser.firstName} ${patientUser.lastName}`
+              : "N/A",
+            doctorName: doctorUser
+              ? `${doctorUser.firstName} ${doctorUser.lastName}`
+              : "N/A",
+            doctorSpecialization: specialization?.name || "N/A",
+            amount: Number(payment.amount),
+            status: payment.paymentStatus || "pending",
+            date: payment.createdAt || "",
+            appointmentDate:
+              appointment?.appointmentDate || appointment?.createdAt || "N/A",
+          }));
+        })
+      : [];
   }, [data]);
 
   const getStatusBadge = (status: Payment["status"]) => {
