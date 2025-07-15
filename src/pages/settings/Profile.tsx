@@ -1,36 +1,68 @@
 import { useSelector } from "react-redux";
-import { useState, useRef } from "react";
-import type { RootState } from "../../app/store";
+import { useState, useRef, useEffect } from "react";
 import { Upload, KeyRound } from "lucide-react";
-import { userApi } from "../../feature/api/userApi";
 import { Dialog } from "@headlessui/react";
+import toast from "react-hot-toast";
+import axios from "axios";
+import { userApi } from "../../feature/api/userApi";
+import type { RootState } from "../../app/store";
 
 export const Profile = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const { data: userData = {}, refetch } = userApi.useGetUserByUserIdQuery({ userId: user.userId });
-
-  console.log(userData);
-
+  const { data: userData } = userApi.useGetUserByUserIdQuery({ userId: user.userId });
   const [updateAvatar] = userApi.useUpdateAvatarMutation();
-  const [changePassword] = userApi.useChangePasswordMutation();
 
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cloud_name = "dbhok4lft";
+  const preset_key = "meditime";
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const profilePicture =
+    previewImage ||
+    userData?.profileImageUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.firstName || "User")}&background=4ade80&color=fff&size=128`;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewImage(previewUrl);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", preset_key);
+
+    const loadingToastId = toast.loading("Uploading image...");
     setUploading(true);
+
     try {
-      await updateAvatar(file).unwrap();
-      refetch();
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+        formData
+      );
+      const profileUrl = response.data.secure_url;
+
+      await updateAvatar({ id: user.userId, profileUrl });
+
+      toast.success("Profile updated successfully!", { id: loadingToastId });
+      setPreviewImage(null);
     } catch (err) {
-      console.error("Upload failed:", err);
+      toast.error("Image upload failed", { id: loadingToastId });
     } finally {
       setUploading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (previewImage) URL.revokeObjectURL(previewImage);
+    };
+  }, [previewImage]);
 
   return (
     <div className="p-6 max-w-5xl mx-auto bg-gray-50 min-h-screen">
@@ -41,10 +73,20 @@ export const Profile = () => {
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 flex flex-col lg:flex-row gap-8">
         <div className="flex flex-col items-center lg:items-start lg:w-1/3">
           <div className="relative mb-6">
-            <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-700 to-blue-800 text-white text-4xl font-bold shadow-xl flex items-center justify-center ring-4 ring-blue-100">
-              {user?.firstName?.[0] || "U"}
+            <div className="w-32 h-32 rounded-2xl overflow-hidden ring-4 ring-blue-100 shadow-xl bg-gray-100">
+              <img
+                src={profilePicture}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
             <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-2 -right-2 bg-blue-800 hover:bg-blue-900 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
@@ -52,11 +94,14 @@ export const Profile = () => {
               <Upload className="w-4 h-4" />
             </button>
           </div>
-          <div className="text-center lg:text-left">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">{user?.name}</h2>
-            <p className="text-gray-600 mb-3">{user?.email}</p>
+
+          <div className="text-center lg:text-left mt-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              {userData?.firstName} {userData?.lastName}
+            </h2>
+            <p className="text-gray-600 mb-3">{userData?.email}</p>
             <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {user?.role}
+              {userData?.role}
             </span>
           </div>
         </div>
@@ -65,9 +110,9 @@ export const Profile = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ProfileField label="First Name" value={userData?.firstName} />
             <ProfileField label="Last Name" value={userData?.lastName} />
-            <ProfileField label="Email Address" value={user?.email} />
-            <ProfileField label="Address" value={user?.address} />
-            <ProfileField label="Contact Phone" value={user?.contactPhone} />
+            <ProfileField label="Email Address" value={userData?.email} />
+            <ProfileField label="Address" value={userData?.address} />
+            <ProfileField label="Contact Phone" value={userData?.contactPhone} />
           </div>
 
           <div className="flex flex-wrap gap-3 pt-6">
@@ -85,13 +130,17 @@ export const Profile = () => {
       <PasswordChangeModal
         open={isPasswordOpen}
         onClose={() => setIsPasswordOpen(false)}
-        onSubmit={async (currentPassword: any, newPassword: any) => {
+        onSubmit={async (currentPassword: string, newPassword: string) => {
           try {
-            await changePassword({ currentPassword, newPassword }).unwrap();
-            alert("Password updated successfully.");
+            await axios.post("http://localhost:3000/users/change-password", {
+              currentPassword,
+              newPassword,
+              userId: user.userId,
+            });
+            toast.success("Password updated successfully.");
             setIsPasswordOpen(false);
-          } catch (error) {
-            alert("Failed to update password.");
+          } catch {
+            toast.error("Failed to update password.");
           }
         }}
       />
@@ -103,9 +152,7 @@ const ProfileField = ({ label, value }: { label: string; value?: string }) => (
   <div className="group">
     <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">{label}</p>
     <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200 group-hover:border-gray-300 transition-colors duration-200">
-      <p className="text-sm font-medium text-gray-900">
-        {value || "N/A"}
-      </p>
+      <p className="text-sm font-medium text-gray-900">{value || "N/A"}</p>
     </div>
   </div>
 );
@@ -119,9 +166,7 @@ const PasswordChangeModal = ({ open, onClose, onSubmit }: any) => {
       <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-gray-100">
-          <Dialog.Title className="text-xl font-bold mb-6 text-gray-900">
-            Change Password
-          </Dialog.Title>
+          <Dialog.Title className="text-xl font-bold mb-6 text-gray-900">Change Password</Dialog.Title>
           <form
             onSubmit={(e) => {
               e.preventDefault();

@@ -68,7 +68,9 @@ export const userApi = createApi({
                 url: `users/${userId}`,
                 method: 'GET',
                 providesTags: ["Users"],
-            })
+            }),
+            providesTags: ["Users"],
+
         }),
 
         changePassword: builder.mutation({
@@ -80,15 +82,11 @@ export const userApi = createApi({
         }),
 
         updateAvatar: builder.mutation({
-            query: (file: File) => {
-                const form = new FormData();
-                form.append("avatar", file);
-                return {
-                url: "users/upload-profile-pic",
-                method: "POST",
-                body: form,
-                };
-            },
+            query: ({id, profileUrl}) => ({
+                url: `users/${id}/upload-profile-pic`,
+                method: "PATCH",
+                body: {profileUrl},
+            }),
             invalidatesTags: ["Users"],
         }),
     })

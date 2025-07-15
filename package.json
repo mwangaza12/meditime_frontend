@@ -15,6 +15,7 @@
     "@stripe/react-stripe-js": "^3.7.0",
     "@stripe/stripe-js": "^7.4.0",
     "@tailwindcss/vite": "^4.1.11",
+    "axios": "^1.10.0",
     "clsx": "^2.1.1",
     "daisyui": "^5.0.43",
     "date-fns": "^4.1.0",
