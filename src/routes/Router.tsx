@@ -23,6 +23,7 @@ import { PaymentsList } from "../pages/payments/PaymentsList";
 import { Profile } from "../pages/settings/Profile";
 import { ForgotPassword } from "../pages/auth/ForgotPassword";
 import { ResetPassword } from "../pages/auth/ResetPassword";
+import { AllDoctors } from "../pages/doctors/AllDoctors";
 
 export const router = createBrowserRouter([
   {
@@ -69,6 +70,11 @@ export const router = createBrowserRouter([
     path: "/reset-password/:token",
     element: <ResetPassword />,
     errorElement: <Error />,
+  },
+  {
+    path: "all-doctors",
+    element: <AllDoctors />,
+    errorElement: <Error />
   },
 
   // Admin Dashboard

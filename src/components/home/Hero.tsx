@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { ArrowRight, ShieldCheck, Lightbulb } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { ArrowRight, ShieldCheck, Lightbulb } from "lucide-react";
+import heroImg from "../../assets/hero.jpg";
 
 export const Hero = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -15,59 +16,69 @@ export const Hero = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden flex items-center justify-center text-gray-900">
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 z-0 opacity-20" style={{
-        backgroundImage: 'linear-gradient(rgba(100, 100, 100, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(100, 100, 100, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}></div>
+    <div className="relative flex flex-col-reverse lg:flex-row py-16 lg:pt-0 lg:pb-0 bg-gray-50">
+      {/* Image Section */}
+      <div className="inset-y-0 top-0 right-0 z-0 w-full max-w-xl px-4 mx-auto md:px-0 lg:pr-0 lg:mb-0 lg:mx-0 lg:w-7/12 lg:max-w-full lg:absolute xl:px-0">
+        <svg
+          className="absolute left-0 hidden h-full text-white transform -translate-x-1/2 lg:block"
+          viewBox="0 0 100 100"
+          fill="currentColor"
+          preserveAspectRatio="none slice"
+        >
+          <path d="M50 0H100L50 100H0L50 0Z" />
+        </svg>
+        <img
+          className="object-cover w-full h-56 rounded shadow-lg lg:rounded-none lg:shadow-none md:h-96 lg:h-full"
+          src={heroImg}
+          alt="Healthcare Innovation"
+        />
+      </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center"> {/* Adjusted vertical padding */}
-        {/* Pre-headline Badge */}
-        <div className={`inline-flex items-center space-x-2 bg-gradient-to-r from-[#093FB4] to-blue-500 text-white text-xs px-3 py-1.5 rounded-full mb-4 md:mb-6 shadow-lg transform transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}> {/* Reduced size */}
-          <Lightbulb className="w-3 h-3 mr-1" /> {/* Smaller icon */}
-          <span>Innovation in Health Technology</span>
-        </div>
+      {/* Text Section */}
+      <div className="relative flex flex-col items-start w-full max-w-xl px-4 mx-auto md:px-0 lg:px-8 lg:max-w-screen-xl">
+        <div className="mb-16 lg:my-40 lg:max-w-lg lg:pr-5">
+          <div className={`inline-flex items-center space-x-2 bg-blue-800 text-white text-xs px-3 py-1.5 rounded-full mb-4 shadow-lg transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <Lightbulb className="w-4 h-4 mr-1" />
+            <span>Innovation in Health Technology</span>
+          </div>
 
-        {/* Main Headline */}
-        <h1 className={`text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-4 md:mb-6 text-gray-900 transform transition-all duration-1000 ease-out delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
-          The Future of <span className="inline-block bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">Healthcare</span> is Here.
-        </h1>
+          <h1 className={`text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-5 transition-all duration-1000 ease-out delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+            The Future of <span className="text-blue-800">Healthcare</span> is Here.
+          </h1>
 
-        {/* Sub-headline */}
-        <p className={`text-base md:text-lg text-gray-700 max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed transform transition-all duration-1000 ease-out delay-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}> {/* Reduced max-width and text size */}
-          Leveraging cutting-edge Automation and advanced analytics to deliver precise, personalized, and predictive health solutions for everyone.
-        </p>
+          <p className={`text-base md:text-lg text-gray-700 mb-6 transition-all duration-1000 ease-out delay-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+            Leveraging automation and advanced analytics to deliver precise, personalized, and predictive health solutions for everyone.
+          </p>
 
-        {/* CTA Buttons */}
-        <div className={`flex flex-col sm:flex-row justify-center gap-3 md:gap-4 transform transition-all duration-1000 ease-out delay-600 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
-          <button className="group relative flex items-center justify-center px-5 py-2.5 md:px-6 md:py-3 text-sm md:text-base font-semibold text-white rounded-xl overflow-hidden shadow-md transition-all duration-300 ease-out
-            bg-gradient-to-r from-[#093FB4] to-blue-700 hover:from-[#093FB4] hover:to-blue-800 hover:scale-105"> {/* Reduced padding and font size */}
-            <span className="relative z-10 flex items-center">
+          {/* Buttons */}
+          <div className={`flex flex-col sm:flex-row gap-4 transition-all duration-1000 ease-out delay-600 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+            <a
+              href="#"
+              className="inline-flex items-center justify-center px-6 py-3 text-white bg-blue-800 hover:bg-blue-900 font-semibold rounded-xl transition-all duration-300"
+            >
               Explore Our Solutions
-              <ArrowRight className="ml-1.5 w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" /> {/* Reduced icon size and translation */}
-            </span>
-          </button>
-          <button className="group flex items-center justify-center px-5 py-2.5 md:px-6 md:py-3 text-sm md:text-base font-semibold text-gray-800 rounded-xl border border-gray-300 backdrop-blur-sm
-            hover:bg-gray-100 hover:border-gray-400 transition-all duration-300 ease-out hover:scale-105"> {/* Reduced padding and font size */}
-            <ShieldCheck className="mr-1.5 w-3.5 h-3.5 text-green-600" /> {/* Reduced icon size */}
-            <span>Learn About Our Security</span>
-          </button>
-        </div>
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </a>
+            <a
+              href="#"
+              className="inline-flex items-center px-6 py-3 text-blue-800 border border-blue-800 font-semibold rounded-xl hover:bg-blue-50 transition-all duration-300"
+            >
+              <ShieldCheck className="mr-2 w-4 h-4 text-green-600" />
+              Learn About Our Security
+            </a>
+          </div>
 
-        {/* Key Metrics/Stats */}
-        <div className={`mt-12 md:mt-16 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-10 max-w-2xl mx-auto transform transition-all duration-1000 ease-out delay-800 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}> {/* Adjusted gaps and top margin */}
-          {stats.map((stat, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <div className={`text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-[#093FB4] to-blue-500 bg-clip-text text-transparent mb-0.5`}> {/* Reduced font sizes */}
-                {stat.value}
+          {/* Stats */}
+          <div className={`mt-10 flex flex-wrap gap-6 transition-all duration-1000 ease-out delay-800 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+            {stats.map((stat, idx) => (
+              <div key={idx} className="flex flex-col items-start">
+                <p className="text-2xl font-extrabold text-blue-800">{stat.value}</p>
+                <p className="text-sm text-gray-700">{stat.label}</p>
               </div>
-              <div className="text-sm md:text-base font-medium text-gray-700">{stat.label}</div> {/* Reduced font sizes */}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};

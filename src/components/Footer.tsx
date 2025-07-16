@@ -3,7 +3,7 @@ import { BsFacebook, BsTwitter, BsYoutube } from "react-icons/bs"
 export const Footer = () => {
     return (
         <footer className="footer sm:footer-horizontal bg-neutral text-neutral-content items-center p-4">
-            <aside className="grid-flow-col items-center">
+            <aside className="grid-flow-col items-center text-blue-800">
                 <svg
                 width="36"
                 height="36"
