@@ -1,25 +1,33 @@
 import { useForm } from "react-hook-form";
-import { User, Briefcase } from "lucide-react";
+import { Briefcase, Text } from "lucide-react";
 import { TextInput } from "../../components/form/TextInput";
 import { Modal } from "../../components/modal/Modal";
 import toast from "react-hot-toast";
 import { doctorApi } from "../../feature/api/doctorApi";
 import { specializationApi } from "../../feature/api/specializationApi";
 import { useEffect } from "react";
+import { BsParagraph } from "react-icons/bs";
 
 type DoctorForm = {
   userId: number;
   specializationId: number;
+  bio: string;
+  experienceYears: number;
 };
 
 interface DoctorModalProps {
   show: boolean;
   onClose: () => void;
-  initialData?: DoctorForm & { id?: number } | null;
+  initialData?: (DoctorForm & { id?: number }) | null;
   isEdit?: boolean;
 }
 
-export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false }: DoctorModalProps) => {
+export const DoctorModal = ({
+  show,
+  onClose,
+  initialData = null,
+  isEdit = false,
+}: DoctorModalProps) => {
   const {
     register,
     handleSubmit,
@@ -30,16 +38,18 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
     defaultValues: {
       userId: initialData?.userId ?? undefined,
       specializationId: initialData?.specializationId ?? undefined,
+      bio: initialData?.bio ?? "",
+      experienceYears: initialData?.experienceYears ?? 0,
     },
   });
 
   const [createDoctor] = doctorApi.useCreateDoctorMutation();
   const [updateDoctor] = doctorApi.useUpdateDoctorMutation();
-  const { data: specializationData, isLoading: specializationLoading } = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
+  const {
+    data: specializationData,
+    isLoading: specializationLoading,
+  } = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
 
-  console.log(specializationData);
-
-  // ✅ Fix: Extract the correct array
   const specializationList = specializationData?.specializations || [];
 
   useEffect(() => {
@@ -47,22 +57,31 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
       reset({
         userId: initialData.userId ?? undefined,
         specializationId: initialData.specializationId ?? undefined,
+        bio: initialData.bio ?? "",
+        experienceYears: initialData.experienceYears ?? 0,
       });
     } else {
-      reset();
+      reset({
+        userId: undefined,
+        specializationId: undefined,
+        bio: "",
+        experienceYears: 0,
+      });
     }
   }, [initialData, reset]);
 
   const onSubmit = async (data: DoctorForm) => {
-    const loadingToast = toast.loading(isEdit ? "Updating doctor..." : "Creating doctor...");
+    const loadingToast = toast.loading(
+      isEdit ? "Updating doctor..." : "Creating doctor..."
+    );
     try {
-      let res;
+      let response;
       if (isEdit && initialData?.id) {
-        res = await updateDoctor({ id: initialData.id, ...data }).unwrap();
-        toast.success(res?.message || "Doctor updated!", { id: loadingToast });
+        response = await updateDoctor({ id: initialData.id, ...data }).unwrap();
+        toast.success(response?.message || "Doctor updated!", { id: loadingToast });
       } else {
-        res = await createDoctor(data).unwrap();
-        toast.success(res?.message || "Doctor created!", { id: loadingToast });
+        response = await createDoctor(data).unwrap();
+        toast.success(response?.message || "Doctor created!", { id: loadingToast });
       }
       reset();
       onClose();
@@ -89,21 +108,6 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-        {/* User ID */}
-        <TextInput
-          label="User ID"
-          type="number"
-          placeholder="Enter User ID"
-          icon={<User size={16} />}
-          name="userId"
-          register={register("userId", {
-            valueAsNumber: true,
-            required: "User ID is required",
-            min: { value: 1, message: "User ID must be positive" },
-          })}
-          error={errors.userId?.message}
-        />
-
         {/* Specialization */}
         <div className="space-y-1">
           <label className="block text-sm font-medium">Specialization</label>
@@ -114,11 +118,12 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
                 valueAsNumber: true,
                 required: "Specialization is required",
               })}
-              defaultValue={initialData?.specializationId ?? ""}
               className="w-full bg-transparent outline-none"
             >
               <option value="" disabled>
-                {specializationLoading ? "Loading specializations..." : "Select Specialization"}
+                {specializationLoading
+                  ? "Loading specializations..."
+                  : "Select Specialization"}
               </option>
               {specializationList.map((item: any) => (
                 <option key={item.specializationId} value={item.specializationId}>
@@ -128,9 +133,48 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
             </select>
           </div>
           {errors.specializationId && (
-            <p className="text-red-500 text-sm">{errors.specializationId.message}</p>
+            <p className="text-red-500 text-sm">
+              {errors.specializationId.message}
+            </p>
           )}
         </div>
+
+        {/* Bio (Textarea) */}
+        <div className="space-y-1">
+          <label className="block text-sm font-medium">Bio</label>
+          <div className="flex items-start border rounded-lg px-3 py-2">
+            <Text size={16} className="mt-1 mr-2 text-gray-500" />
+            <textarea
+              {...register("bio", {
+                required: "Bio is required",
+                minLength: {
+                  value: 10,
+                  message: "Bio should be at least 10 characters",
+                },
+              })}
+              placeholder="Enter doctor's bio"
+              className="w-full bg-transparent outline-none resize-none h-24"
+            />
+          </div>
+          {errors.bio && (
+            <p className="text-red-500 text-sm">{errors.bio.message}</p>
+          )}
+        </div>
+
+        {/* Experience Years */}
+        <TextInput
+          icon={<BsParagraph />}
+          label="Years of Experience"
+          type="number"
+          placeholder="Enter years of experience"
+          name="experienceYears"
+          register={register("experienceYears", {
+            valueAsNumber: true,
+            required: "Experience is required",
+            min: { value: 0, message: "Must be non-negative" },
+          })}
+          error={errors.experienceYears?.message}
+        />
 
         {/* Submit Button */}
         <button
@@ -150,7 +194,6 @@ export const DoctorModal = ({ show, onClose, initialData = null, isEdit = false 
             ? "Update Doctor"
             : "Create Doctor"}
         </button>
-
       </form>
     </Modal>
   );
