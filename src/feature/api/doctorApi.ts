@@ -61,6 +61,24 @@ export const doctorApi = createApi({
             }),
             providesTags: ['Doctors'],
         }),
+
+        deleteDoctor: builder.mutation({
+            query: (id) => ({
+                url: `doctors/${id}`,
+                method: "DELETE"
+            }),
+            invalidatesTags: ['Doctors']
+        }),
+
+        demoteUserFromDoctor: builder.mutation({
+            query: ({ id, ...body }) => ({
+                url: `users/role/${id}`,
+                method: 'PATCH',
+                body,
+            }),
+            invalidatesTags: ['Doctors']
+        }),
+
     })
 
 })

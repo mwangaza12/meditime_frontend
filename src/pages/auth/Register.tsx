@@ -57,7 +57,7 @@ export const Register = () => {
   return (
     <div>
       <Navbar />
-      <div className="flex items-center justify-center pt-8 pb-12 px-4 bg-gray-100 min-h-screen">
+      <div className="flex items-center justify-center pt-8 pb-12 px-4 bg-blue-50 min-h-screen">
         <div className="w-full max-w-2xl">
           <div className="bg-white rounded-3xl shadow-md overflow-hidden">
             <div className="p-8 lg:p-12">

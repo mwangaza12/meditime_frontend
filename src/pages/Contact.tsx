@@ -23,7 +23,7 @@ export const Contact: React.FC = () => {
             {/* Contact Form */}
             <div className="bg-white rounded-2xl shadow-xl p-10 space-y-8">
               <div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">Send Us a Message</h2>
+                <h2 className="text-3xl font-bold text-blue-800 mb-2">Send Us a Message</h2>
                 <p className="text-gray-500">We'd love to hear from you! Fill out the form below and our team will get back to you shortly.</p>
               </div>
 
@@ -60,7 +60,7 @@ export const Contact: React.FC = () => {
             {/* Contact Info */}
             <div className="space-y-10">
               <div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">Contact Information</h2>
+                <h2 className="text-3xl font-bold text-blue-800 mb-2">Contact Information</h2>
                 <p className="text-gray-500 max-w-md">Our team is here to help. Reach out to us through the methods below or visit us in person.</p>
               </div>
 

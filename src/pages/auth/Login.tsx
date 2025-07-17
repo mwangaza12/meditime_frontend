@@ -43,7 +43,7 @@ export const Login = () => {
         id: loadingToastId,
       });
 
-      const role = res?.role;  // Corrected from res.userType to res.role
+      const role = res?.role;
       if (role === "admin") {
         navigate("/dashboard");
       } else if (role === "doctor") {
@@ -66,7 +66,7 @@ export const Login = () => {
   return (
     <div>
       <Navbar />
-      <div className="flex items-center justify-center pt-8 pb-12 px-4">
+      <div className="flex items-center justify-center bg-blue-50 pt-8 pb-12 px-4">
         <div className="w-full max-w-2xl">
           <div className="bg-white rounded-3xl shadow-md overflow-hidden">
             <div className="p-8 lg:p-12">
@@ -106,10 +106,6 @@ export const Login = () => {
                     name="password"
                     register={register("password", {
                       required: "Password is required",
-                      minLength: {
-                        value: 6,
-                        message: "Password must be at least 6 characters",
-                      },
                     })}
                     error={errors.password?.message}
                   />

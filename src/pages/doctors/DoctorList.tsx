@@ -4,21 +4,26 @@ import { Table } from '../../components/table/Table';
 import { doctorApi } from '../../feature/api/doctorApi';
 import { Spinner } from '../../components/loader/Spinner';
 import { DoctorModal } from './DoctorModal';
+import Swal from 'sweetalert2';
 
 interface DoctorListProps {
   source: 'doctors' | 'users';
 }
 
 interface Doctor {
-  id: number;
+  doctorId: number;
   specialization: string;
+  specializationId: number;
   availableDays: string;
   user: {
+    userId: number;
     firstName: string;
     lastName: string;
     email: string;
     contactPhone: string;
   };
+  bio: string;
+  experienceYears: number;
 }
 
 interface User {
@@ -31,11 +36,23 @@ interface User {
   createdAt?: string;
 }
 
+interface DoctorForm {
+  userId: number;
+  specializationId: number;
+  contactPhone: string;
+  availableDays: string;
+  bio: string;
+  experienceYears: number;
+}
+
 export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(5);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<(DoctorForm & { id?: number }) | null>(null);
+
+  const [deleteDoctor] = doctorApi.useDeleteDoctorMutation();
+  const [demoteUser] = doctorApi.useDemoteUserFromDoctorMutation();
 
   const isDoctors = source === 'doctors';
 
@@ -43,13 +60,20 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
   const userQuery = doctorApi.useGetUserDoctorsQuery({ page, pageSize });
 
   const doctors: Doctor[] = (doctorQuery.data?.doctors ?? []).map((doc: any) => ({
-    id: doc.id ?? doc.doctorId ?? doc.userId ?? 0,
+    doctorId: doc.doctorId ?? doc.id ?? doc.userId ?? 0,
     specialization:
       typeof doc.specialization === 'object' && doc.specialization !== null
         ? doc.specialization.name ?? 'N/A'
         : doc.specialization ?? 'N/A',
+    specializationId:
+      typeof doc.specialization === 'object' && doc.specialization !== null
+        ? doc.specialization.id ?? 0
+        : 0,
     availableDays: doc.availability?.[0]?.dayOfWeek ?? 'N/A',
+    bio: doc.bio ?? '',
+    experienceYears: doc.experienceYears ?? 0,
     user: {
+      userId: doc.user?.userId ?? doc.userId ?? 0,
       firstName: doc.user?.firstName ?? doc.firstName ?? '',
       lastName: doc.user?.lastName ?? doc.lastName ?? '',
       email: doc.user?.email ?? doc.email ?? '',
@@ -57,7 +81,7 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
     },
   }));
 
-  const doctorUserIds = new Set<number>(doctors.map(d => d.id));
+  const doctorUserIds = new Set<number>(doctors.map((d) => d.user.userId));
 
   const users: User[] = (userQuery.data?.doctors ?? [])
     .filter((u: any) => !doctorUserIds.has(u.userId ?? 0))
@@ -84,11 +108,13 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
 
   const handleEditDoctor = (doctor: Doctor) => {
     setSelectedDoctor({
-      id: doctor.id,
-      userId: doctor.id,
-      specialization: doctor.specialization,
+      id: doctor.doctorId,
+      userId: doctor.user.userId,
+      specializationId: doctor.specializationId,
       contactPhone: doctor.user.contactPhone,
       availableDays: doctor.availableDays,
+      bio: doctor.bio,
+      experienceYears: doctor.experienceYears,
     });
     setShowModal(true);
   };
@@ -96,11 +122,57 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
   const handleCreateDoctorFromUser = (user: User) => {
     setSelectedDoctor({
       userId: user.userId,
-      specialization: '',
+      specializationId: 0,
       contactPhone: user.contactPhone || '',
       availableDays: '',
+      bio: '',
+      experienceYears: 0,
     });
     setShowModal(true);
+  };
+
+  const handleDeleteDoctor = async (doctor: Doctor) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to delete Dr. ${doctor.user.firstName} ${doctor.user.lastName}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteDoctor(doctor.doctorId).unwrap();
+        await doctorQuery.refetch();
+        Swal.fire('Deleted!', 'Doctor has been removed.', 'success');
+      } catch (error) {
+        Swal.fire('Error!', 'Failed to delete doctor.', 'error');
+      }
+    }
+  };
+
+  const handleDeleteFromUser = async (user: User) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to remove ${user.firstName} ${user.lastName}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await demoteUser({ id: user.userId, role: 'user' }).unwrap();
+        await userQuery.refetch();
+        Swal.fire('Deleted!', 'User has been removed.', 'success');
+      } catch (error) {
+        Swal.fire('Error!', 'Failed to delete user.', 'error');
+      }
+    }
   };
 
   const doctorColumns = [
@@ -130,7 +202,7 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
         <div className="flex space-x-2">
           <button><Eye className="w-4 h-4 text-green-600" /></button>
           <button onClick={() => handleEditDoctor(d)}><Edit className="w-4 h-4 text-blue-600" /></button>
-          <button><Trash2 className="w-4 h-4 text-red-600" /></button>
+          <button onClick={() => handleDeleteDoctor(d)}><Trash2 className="w-4 h-4 text-red-600" /></button>
         </div>
       ),
     },
@@ -165,7 +237,7 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
         <div className="flex space-x-2">
           <button><Eye className="w-4 h-4 text-green-600" /></button>
           <button onClick={() => handleCreateDoctorFromUser(u)}><Edit className="w-4 h-4 text-blue-600" /></button>
-          <button><Trash2 className="w-4 h-4 text-red-600" /></button>
+          <button onClick={() => handleDeleteFromUser(u)}><Trash2 className="w-4 h-4 text-red-600" /></button>
         </div>
       ),
     },
@@ -181,7 +253,7 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
         <>
           <div className="flex justify-between items-center mb-4">
             <p className="text-sm text-slate-600">
-              Showing page {page} of {totalPages} — {totalCount} {isDoctors ? 'doctors' : 'users'}
+              Page {page} of {totalPages} — {totalCount} {isDoctors ? 'doctors' : 'users'}
             </p>
             <div className="flex items-center space-x-2">
               <label className="text-sm text-slate-600">Page Size:</label>
@@ -216,14 +288,14 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
 
           <div className="flex justify-between items-center mt-4">
             <button
-              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
               className="px-3 py-1 border rounded text-sm hover:bg-slate-100 disabled:opacity-50"
             >
               Previous
             </button>
             <button
-              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page >= totalPages}
               className="px-3 py-1 border rounded text-sm hover:bg-slate-100 disabled:opacity-50"
             >
