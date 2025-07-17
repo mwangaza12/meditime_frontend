@@ -206,7 +206,7 @@ export const AllDoctors = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {paginatedDoctors.length > 0 ? (
             paginatedDoctors.map((doctor: any) => (
-              <div key={doctor.doctorId} className="bg-white rounded-xl p-4 border shadow-sm hover:shadow-md transition">
+              <div key={doctor.doctorId} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-full overflow-hidden border border-gray-200">
                     {doctor.user.profileImageUrl ? (
