@@ -19,8 +19,8 @@ export const Profile = () => {
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   
   
-  const cloud_name = "dbhok4lft";
-  const preset_key = "meditime";
+  const cloud_name = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const preset_key = import.meta.env.VITE_CLOUDINARY_PRESET_KEY;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const profilePicture =

@@ -18,7 +18,6 @@ import { ComplaintsList } from "../pages/complaints/ComplaintsList";
 import { PrescriptionList } from "../pages/prescriptions/PrescriptionList";
 import { SpecializationList } from "../pages/specializations/SpecializationList";
 import { DoctorAvailabilityList } from "../pages/doctorsAvailability/DoctorAvailabilityList";
-import { BrowseDoctors } from "../pages/doctors/BrowseDoctors";
 import { PaymentsList } from "../pages/payments/PaymentsList";
 import { Profile } from "../pages/settings/Profile";
 import { ForgotPassword } from "../pages/auth/ForgotPassword";
@@ -58,8 +57,8 @@ export const router = createBrowserRouter([
     errorElement: <Error />,
   },
   {
-    path: "browse-doctors",
-    element: <BrowseDoctors />,
+    path: "/browse-doctors",
+    element: <AllDoctors />,
     errorElement: <Error />,
   },
   {
@@ -159,7 +158,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "browse-doctors",
-        element: <BrowseDoctors />
+        element: <AllDoctors />
       },
       {
         path: "payments",

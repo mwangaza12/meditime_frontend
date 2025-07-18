@@ -167,7 +167,7 @@ export const UserDashboard = () => {
 
             {/* Appointments Calendar */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Appointments Calendar</h2>
+              <h2 className="text-xl font-semibold text-blue-800 mb-4">Appointments Calendar</h2>
               <div style={{ height: '400px' }}>
                 <BigCalendar
                   localizer={localizer}
@@ -194,7 +194,7 @@ export const UserDashboard = () => {
           {/* Notifications & Medications */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Notifications</h2>
+              <h2 className="text-lg font-semibold text-blue-800 mb-4">Recent Notifications</h2>
               <div className="space-y-3">
                 {notifications.map(notification => (
                   <div key={notification.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -209,7 +209,7 @@ export const UserDashboard = () => {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Medications</h2>
+              <h2 className="text-lg font-semibold text-blue-800 mb-4">Current Medications</h2>
               <div className="space-y-3">
                 {prescriptions.length === 0 ? (
                   <p className="text-sm text-gray-500">No active prescriptions.</p>
