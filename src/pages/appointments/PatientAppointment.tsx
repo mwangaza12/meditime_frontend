@@ -16,7 +16,7 @@ interface Appointment {
   patientName: string;
   doctorName: string;
   date: string;
-  time: string;
+  startTime: string; // ISO string
   status: "pending" | "cancelled" | "confirmed";
   durationMinutes: number;
   totalAmount?: number;
@@ -27,7 +27,6 @@ export const PatientAppointment = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [showComplaintModal, setShowComplaintModal] = useState(false);
-  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
 
   const {
@@ -55,17 +54,30 @@ export const PatientAppointment = () => {
 
   const mappedAppointments: Appointment[] = useMemo(
     () =>
-      userData.map((item: any): Appointment => ({
-        id: String(item.appointmentId),
-        patientName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim(),
-        doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
-        date: item.appointmentDate,
-        time: item.timeSlot,
-        status: mapStatus(item.appointmentStatus),
-        durationMinutes: item.durationMinutes || 30,
-        totalAmount: Number(item.totalAmount),
-        isPaid: item.payments?.[0]?.paymentStatus === "completed",
-      })),
+      userData.map((item: any): Appointment => {
+        const dateStr = item.appointmentDate;
+        const timeStr = item?.availability?.startTime;
+        let startTime = "";
+
+        if (dateStr && timeStr) {
+          const [hours, minutes] = timeStr.split(":").map(Number);
+          const date = new Date(dateStr);
+          date.setHours(hours, minutes, 0, 0);
+          startTime = date.toISOString();
+        }
+
+        return {
+          id: String(item.appointmentId),
+          patientName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim(),
+          doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
+          date: item.appointmentDate,
+          startTime,
+          status: mapStatus(item.appointmentStatus),
+          durationMinutes: item.durationMinutes || 30,
+          totalAmount: Number(item.totalAmount),
+          isPaid: item.payments?.[0]?.paymentStatus === "completed",
+        };
+      }),
     [userData]
   );
 
@@ -87,20 +99,15 @@ export const PatientAppointment = () => {
     setShowComplaintModal(true);
   };
 
-  const handleOpenReschedule = (appointmentId: string) => {
-    setSelectedAppointmentId(appointmentId);
-    setShowRescheduleModal(true);
-  };
-
   const handleCancelAppointment = async (appointmentId: string) => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) {
       return;
     }
 
     try {
-      const response = await changeStatus({ 
-        appointmentId, 
-        status: "cancelled" 
+      const response = await changeStatus({
+        appointmentId,
+        status: "cancelled",
       }).unwrap();
 
       toast.success(response.message || "Appointment cancelled successfully");
@@ -112,82 +119,86 @@ export const PatientAppointment = () => {
     }
   };
 
-  const canRescheduleOrCancel = (appointment: Appointment) => {
+  const canCancel = (appointment: Appointment) => {
     return appointment.status === "pending" || appointment.status === "confirmed";
   };
 
-  const columns: Column<Appointment>[] = useMemo(() => [
-    { header: "Doctor", accessor: "doctorName" },
-    {
-      header: "Date",
-      accessor: (row) => new Date(row.date).toLocaleDateString(),
-    },
-    { header: "Time", accessor: "time" },
-    { header: "Duration", accessor: (row) => `${row.durationMinutes} min` },
-    {
-      header: "Status",
-      accessor: (row) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
-            row.status
-          )}`}
-        >
-          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-        </span>
-      ),
-    },
-    {
-      header: "Amount",
-      accessor: (row) =>
-        typeof row.totalAmount === "number" ? `Ksh. ${row.totalAmount}` : "N/A",
-    },
-    {
-      header: "Payment",
-      accessor: (row) => {
-        const canPay =
-          row.status === "pending" &&
-          typeof row.totalAmount === "number" &&
-          !row.isPaid;
-
-        return canPay ? (
-          <StripeCheckoutButton amount={row.totalAmount!} appointmentId={row.id} />
-        ) : row.isPaid ? (
-          <span className="text-green-600 font-medium italic">Paid</span>
-        ) : (
-          <span className="text-gray-400 italic">N/A</span>
-        );
+  const columns: Column<Appointment>[] = useMemo(
+    () => [
+      { header: "Doctor", accessor: "doctorName" },
+      {
+        header: "Date",
+        accessor: (row) => new Date(row.date).toLocaleDateString(),
       },
-    },
-    {
-      header: "Actions",
-      accessor: (row) => (
-        <div className="flex gap-2">
-          {canRescheduleOrCancel(row) && (
-            <>
-              <button
-                onClick={() => handleOpenReschedule(row.id)}
-                className="text-sm px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-              >
-                Reschedule
-              </button>
+      {
+        header: "Time",
+        accessor: (row) =>
+          row.startTime
+            ? new Date(row.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "N/A",
+      },
+      {
+        header: "Duration",
+        accessor: (row) => `${row.durationMinutes} min`,
+      },
+      {
+        header: "Status",
+        accessor: (row) => (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
+              row.status
+            )}`}
+          >
+            {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+          </span>
+        ),
+      },
+      {
+        header: "Amount",
+        accessor: (row) =>
+          typeof row.totalAmount === "number" ? `Ksh. ${row.totalAmount}` : "N/A",
+      },
+      {
+        header: "Payment",
+        accessor: (row) => {
+          const canPay =
+            row.status === "pending" &&
+            typeof row.totalAmount === "number" &&
+            !row.isPaid;
+
+          return canPay ? (
+            <StripeCheckoutButton amount={row.totalAmount!} appointmentId={row.id} />
+          ) : row.isPaid ? (
+            <span className="text-green-600 font-medium italic">Paid</span>
+          ) : (
+            <span className="text-gray-400 italic">N/A</span>
+          );
+        },
+      },
+      {
+        header: "Actions",
+        accessor: (row) => (
+          <div className="flex gap-2">
+            {canCancel(row) && (
               <button
                 onClick={() => handleCancelAppointment(row.id)}
                 className="text-sm px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
               >
                 Cancel
               </button>
-            </>
-          )}
-          <button
-            onClick={() => handleOpenComplaint(row.id)}
-            className="text-sm px-3 py-1 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
-          >
-            Complaint
-          </button>
-        </div>
-      ),
-    },
-  ], []);
+            )}
+            <button
+              onClick={() => handleOpenComplaint(row.id)}
+              className="text-sm px-3 py-1 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+            >
+              Complaint
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="p-6">
@@ -228,40 +239,6 @@ export const PatientAppointment = () => {
             appointmentId={selectedAppointmentId}
             onClose={() => setShowComplaintModal(false)}
           />
-        </Modal>
-      )}
-
-      {/* Reschedule Modal - You'll need to create this component */}
-      {showRescheduleModal && selectedAppointmentId && (
-        <Modal
-          title="Reschedule Appointment"
-          show={showRescheduleModal}
-          onClose={() => setShowRescheduleModal(false)}
-          width="max-w-md"
-        >
-          <div className="p-4">
-            <p className="text-gray-600 mb-4">
-              Reschedule functionality will be implemented here.
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowRescheduleModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  // TODO: Implement reschedule logic
-                  toast.success("Reschedule functionality coming soon!");
-                  setShowRescheduleModal(false);
-                }}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Reschedule
-              </button>
-            </div>
-          </div>
         </Modal>
       )}
     </div>
