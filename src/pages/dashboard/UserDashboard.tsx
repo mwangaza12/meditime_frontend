@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
+import { Calendar as BigCalendar, momentLocalizer, type View } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Swal from 'sweetalert2';
 import { appointmentApi } from '../../feature/api/appointmentApi';
@@ -50,6 +50,7 @@ export const UserDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user.userId;
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<View>('month');
 
   const { data: appointments = [] } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
   const { data: prescriptions = [] } = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
@@ -157,6 +158,8 @@ export const UserDashboard = () => {
                   events={appointmentEvents}
                   startAccessor="start"
                   endAccessor="end"
+                  view={view}
+                  onView={setView}
                   date={currentDate} // 👈 controlled date
                   onNavigate={(newDate) => {
                     console.log("Navigated to:", newDate);
