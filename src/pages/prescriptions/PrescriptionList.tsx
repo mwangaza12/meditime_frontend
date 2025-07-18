@@ -13,7 +13,7 @@ interface Prescription {
   appointmentId: number;
   doctorName: string;
   patientName: string;
-  notes: string;
+  instructions: string;
   createdAt: string;
 }
 
@@ -47,7 +47,7 @@ export const PrescriptionList = () => {
         appointmentId: item.appointmentId,
         doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
         patientName: `${item.patient?.firstName || ""} ${item.patient?.lastName || ""}`.trim(),
-        notes: item.notes || "No notes",
+        instructions: item.instructions || "No instructions",
         createdAt: new Date(item.createdAt).toLocaleDateString(),
       })),
     [data]
@@ -58,7 +58,7 @@ export const PrescriptionList = () => {
       { header: "Patient", accessor: "patientName" as keyof Prescription },
       { header: "Doctor", accessor: "doctorName" as keyof Prescription },
       { header: "Appointment ID", accessor: "appointmentId" as keyof Prescription },
-      { header: "Notes", accessor: "notes" as keyof Prescription },
+      { header: "Notes", accessor: "instructions" as keyof Prescription },
       { header: "Date", accessor: "createdAt" as keyof Prescription },
     ],
     []

@@ -1,10 +1,7 @@
-import React, { useMemo } from 'react';
-import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import React, { useMemo, useState } from 'react';
+import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { enUS } from 'date-fns/locale/en-US';
 import Swal from 'sweetalert2';
-
 import { appointmentApi } from '../../feature/api/appointmentApi';
 import { Calendar, Bell, Heart, Pill } from "lucide-react";
 import { useSelector } from 'react-redux';
@@ -13,17 +10,11 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { prescriptionApi } from '../../feature/api/prescriptionApi';
 import { paymentApi } from '../../feature/api/paymentApi';
+import moment from 'moment';
 
 dayjs.extend(isSameOrAfter);
 
-const locales = { 'en-US': enUS };
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-  getDay,
-  locales,
-});
+const localizer = momentLocalizer(moment);
 
 type CalendarEvent = {
   id: string;
@@ -40,16 +31,7 @@ const notifications = [
   { id: 3, message: "Time to take your medication: Metformin", time: "3 hours ago", type: "medication" }
 ];
 
-const StatCard = ({
-  title, value, subtitle, icon: Icon, bgColor, iconColor
-}: {
-  title: string;
-  value: string;
-  subtitle?: string;
-  icon: React.ElementType;
-  bgColor: string;
-  iconColor: string;
-}) => (
+const StatCard = ({title, value, subtitle, icon: Icon, bgColor, iconColor}: {title: string;value: string;subtitle?: string;icon: React.ElementType;bgColor: string;iconColor: string;}) => (
   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
     <div className="flex items-center justify-between">
       <div>
@@ -67,6 +49,7 @@ const StatCard = ({
 export const UserDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user.userId;
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const { data: appointments = [] } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
   const { data: prescriptions = [] } = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
@@ -174,6 +157,11 @@ export const UserDashboard = () => {
                   events={appointmentEvents}
                   startAccessor="start"
                   endAccessor="end"
+                  date={currentDate} // 👈 controlled date
+                  onNavigate={(newDate) => {
+                    console.log("Navigated to:", newDate);
+                    setCurrentDate(newDate); // 👈 update calendar view
+                  }}
                   defaultView="month"
                   views={['month', 'week', 'day']}
                   popup
