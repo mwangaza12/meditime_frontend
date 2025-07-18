@@ -24,7 +24,7 @@ export const PrescriptionList = () => {
 
   const [showModal, setShowModal] = useState(false);
 
-  // Select query hook based on role:
+  // Fetch prescriptions based on user role
   const {
     data = [],
     isLoading,
@@ -64,6 +64,9 @@ export const PrescriptionList = () => {
     []
   );
 
+  const noDataMessage =
+    error && (error as any)?.data?.message === "No prescriptions found for this user.";
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -72,7 +75,6 @@ export const PrescriptionList = () => {
           <p className="text-gray-600">View and manage all prescriptions</p>
         </div>
 
-        {/* Only doctors can create prescriptions */}
         {isDoctor && (
           <button
             onClick={() => setShowModal(true)}
@@ -85,12 +87,17 @@ export const PrescriptionList = () => {
 
       {isLoading ? (
         <Spinner />
+      ) : noDataMessage || mappedPrescriptions.length === 0 ? (
+        <p className="text-gray-500 italic">No prescriptions found.</p>
       ) : error ? (
         <p className="text-red-500">Failed to load prescriptions.</p>
-      ) : mappedPrescriptions.length === 0 ? (
-        <p className="text-gray-500 italic">No prescriptions found.</p>
       ) : (
-        <Table columns={columns} data={mappedPrescriptions} selectable={false} emptyText="No prescriptions found." />
+        <Table
+          columns={columns}
+          data={mappedPrescriptions}
+          selectable={false}
+          emptyText="No prescriptions found."
+        />
       )}
 
       <Modal title="Create Prescription" show={showModal} onClose={() => setShowModal(false)} width="max-w-lg">

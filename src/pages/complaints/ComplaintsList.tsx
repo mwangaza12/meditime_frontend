@@ -19,21 +19,25 @@ export const ComplaintsList = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
 
-  // Admin: fetch all complaints
-  const { data: allComplaints = [], error: adminError, isLoading: adminLoading } = complaintApi.useGetAllComplaintsQuery(
-    { page: 1, pageSize: 10 },
-    { skip: !isAdmin }
-  );
+  const {
+    data: allComplaints = [],
+    error: adminError,
+    isLoading: adminLoading,
+  } = complaintApi.useGetAllComplaintsQuery({ page: 1, pageSize: 10 }, { skip: !isAdmin });
 
-  // Regular User: fetch their own complaints
-  const { data: userComplaints = [], error: userError, isLoading: userLoading } = complaintApi.useGetUserComplaintsQuery(
-    user?.userId,
-    { skip: isAdmin || !user?.userId }
-  );
+  const {
+    data: userComplaints = [],
+    error: userError,
+    isLoading: userLoading,
+  } = complaintApi.useGetUserComplaintsQuery(user?.userId, { skip: isAdmin || !user?.userId });
 
   const complaintsData = isAdmin ? allComplaints : userComplaints;
   const isLoading = isAdmin ? adminLoading : userLoading;
   const error = isAdmin ? adminError : userError;
+
+  const isEmptyError =
+    (error as any)?.error === "No complaints found" ||
+    (error as any)?.data?.message === "No complaints found";
 
   const mapStatus = (status: string): Complaint["status"] => {
     switch (status?.toLowerCase()) {
@@ -110,12 +114,12 @@ export const ComplaintsList = () => {
 
       {isLoading ? (
         <Spinner />
-      ) : error ? (
-        <p className="text-red-500">Failed to load complaints.</p>
-      ) : mappedComplaints.length === 0 ? (
+      ) : isEmptyError || mappedComplaints.length === 0 ? (
         <p className="text-gray-500 italic">
           {isAdmin ? "No complaints found." : "You have not submitted any complaints yet."}
         </p>
+      ) : error ? (
+        <p className="text-red-500">Failed to load complaints.</p>
       ) : (
         <Table
           columns={columns}
