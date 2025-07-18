@@ -105,11 +105,21 @@ export const UserDashboard = () => {
   const nextAppointment = upcomingAppointments[0];
 
   const totalAmountUsed = useMemo(() => {
-    return payments.reduce((sum: number, payment: any) => {
-      const amount = parseFloat(payment.amount || '0');
-      return sum + (isNaN(amount) ? 0 : amount);
+    return appointments.reduce((sum: number, appointment: any) => {
+      const appointmentPayments = appointment.payments || [];
+      const completedPayments = appointmentPayments.filter((p: any) => p.paymentStatus === 'completed');
+
+      const paymentSum = completedPayments.reduce((acc: number, payment: any) => {
+        const amount = parseFloat(payment.amount || '0');
+        return acc + (isNaN(amount) ? 0 : amount);
+      }, 0);
+
+      return sum + (paymentSum * 100);
     }, 0);
-  }, [payments]);
+  }, [appointments]);
+
+
+  console.log(payments);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
