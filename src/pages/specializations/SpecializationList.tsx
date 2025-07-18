@@ -6,12 +6,12 @@ import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
 import { specializationApi } from "../../feature/api/specializationApi";
 import { useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 interface Specialization {
-  id: string;
+  id: number;
   name: string;
   description: string;
-  status?: "active" | "inactive";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -21,81 +21,84 @@ export const SpecializationList = () => {
   const isAdmin = user?.role === "admin";
 
   const [showModal, setShowModal] = useState(false);
+  const [editingSpecialization, setEditingSpecialization] = useState<Specialization | null>(null);
 
   const {
     data,
     error,
     isLoading,
+    refetch,
   } = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
 
-  // ✅ Correct extraction based on your API response
+  const [deleteSpecialization] = specializationApi.useDeleteSpecializationMutation();
+
   const specializations = data?.specializations ?? [];
 
-  const mapStatus = (status: string): Specialization["status"] => {
-    switch (status?.toLowerCase()) {
-      case "active":
-        return "active";
-      case "inactive":
-        return "inactive";
-      default:
-        return "active";
-    }
+  const mappedSpecializations: Specialization[] = useMemo(
+    () =>
+      specializations.map((item: any) => ({
+        id: item.specializationId ?? item.id ?? 0, // keep as number
+        name: item.name ?? "Unknown",
+        description: item.description ?? "No description available",
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      })),
+    [specializations]
+  );
+
+  const handleEdit = (specialization: Specialization) => {
+    setEditingSpecialization(specialization);
+    setShowModal(true);
   };
 
-  const mappedSpecializations = useMemo(() =>
-    specializations.map((item: any) => ({
-      id: String(item.specializationId ?? item.id ?? ""),
-      name: item.name ?? "Unknown",
-      description: item.description ?? "No description available",
-      status: mapStatus(item.status ?? "active"),
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-    }))
-  , [specializations]);
+  const handleDelete = async (id: number) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This specialization will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
 
-  const getStatusBadge = (status: Specialization["status"]) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "inactive":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const columns = useMemo(() => [
-    { header: "Name", accessor: "name" as keyof Specialization },
-    { header: "Description", accessor: "description" as keyof Specialization },
-    { 
-      header: "Status", 
-      accessor: (row: Specialization) => {
-        const status = row.status ?? "active";
-        const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1);
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(status)}`}>
-            {formattedStatus}
-          </span>
-        );
+    if (result.isConfirmed) {
+      try {
+        await deleteSpecialization(id).unwrap();
+        Swal.fire("Deleted!", "Specialization has been deleted.", "success");
+        refetch();
+      } catch (err) {
+        Swal.fire("Error", "Failed to delete specialization.", "error");
       }
-    },
-    { 
-      header: "Created", 
-      accessor: (row: Specialization) => (
-        <span className="text-gray-600">
-          {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A"}
-        </span>
-      )
-    },
-    { 
-      header: "Updated", 
-      accessor: (row: Specialization) => (
-        <span className="text-gray-600">
-          {row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : "N/A"}
-        </span>
-      )
-    },
-  ], []);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      { header: "Name", accessor: "name" as keyof Specialization },
+      { header: "Description", accessor: "description" as keyof Specialization },
+      {
+        header: "Actions",
+        accessor: (row: Specialization) => (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handleEdit(row)}
+              className="text-sm px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(row.id)}
+              className="text-sm px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+            >
+              Delete
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="p-6">
@@ -107,7 +110,10 @@ export const SpecializationList = () => {
 
         {isAdmin && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingSpecialization(null);
+              setShowModal(true);
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition"
           >
             + Create Specialization
@@ -131,12 +137,26 @@ export const SpecializationList = () => {
       )}
 
       <Modal
-        title="Create Specialization"
+        title={editingSpecialization ? "Edit Specialization" : "Create Specialization"}
         show={showModal}
         onClose={() => setShowModal(false)}
         width="max-w-xl"
       >
-        <SpecializationModal onClose={() => setShowModal(false)} />
+        <SpecializationModal
+          onClose={() => {
+            setShowModal(false);
+            setEditingSpecialization(null);
+          }}
+          specialization={
+            editingSpecialization
+              ? {
+                  ...editingSpecialization,
+                  id: editingSpecialization.id.toString(), // convert number to string
+                }
+              : null
+          }
+      />
+
       </Modal>
     </div>
   );

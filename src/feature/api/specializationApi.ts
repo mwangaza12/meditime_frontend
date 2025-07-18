@@ -33,13 +33,21 @@ export const specializationApi = createApi({
             invalidatesTags: ['Specialization']
         }),
 
-        updatespecialization: builder.mutation({
+        updateSpecialization: builder.mutation({
             query: ({ id, ...body }) => ({
                 url: `specializations/${id}`,
                 method: 'PUT',
                 body,
             }),
             invalidatesTags: ['Specialization']
+        }),
+
+        deleteSpecialization: builder.mutation({
+            query: (id: number) => ({
+                url: `specializations/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ['Specialization'],
         }),
     })
 
