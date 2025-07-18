@@ -24,6 +24,7 @@ import { Profile } from "../pages/settings/Profile";
 import { ForgotPassword } from "../pages/auth/ForgotPassword";
 import { ResetPassword } from "../pages/auth/ResetPassword";
 import { AllDoctors } from "../pages/doctors/AllDoctors";
+import { PatientAppointment } from "../pages/appointments/PatientAppointment";
 
 export const router = createBrowserRouter([
   {
@@ -146,7 +147,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "appointments",
-        element: <AppointmentList />,
+        element: <PatientAppointment />,
       },
       {
         path: "complaints",
