@@ -25,9 +25,9 @@ export const appointmentApi = createApi({
         }),
 
         getAppointmentsByUserId: builder.query({
-            query: ({ userId }) => ({
+            query: ({ userId, page, PageSize }) => ({
                 url: 'appointments/user',
-                params: { userId },
+                params: { userId,page, PageSize  },
             }),
             providesTags: ['Appointments']
         }),
