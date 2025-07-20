@@ -52,8 +52,8 @@ export const UserDashboard = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<View>('month');
 
-  const { data: appointments = [] } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
-  const { data: prescriptions = [] } = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
+  const { data } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
+  const appointments = data?.appointments ?? [];  const { data: prescriptions = [] } = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
   const { data: payments = [] } = paymentApi.useGetPaymentsByUserIdQuery({ userId });
 
   const { upcomingAppointments } = useMemo(() => {
