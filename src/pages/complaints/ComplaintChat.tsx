@@ -34,16 +34,21 @@ const replies = data?.replies ?? [];
     inputRef.current?.focus();
   }, []);
 
-  const handleSend = async () => {
-    if (!newMessage.trim() || !complaintId) return;
+    const handleSend = async () => {
+        if (!newMessage.trim() || !complaintId || !user?.userId) return;
 
-    try {
-      await addReply({ complaintId: Number(complaintId), message: newMessage }).unwrap();
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending reply:", error);
-    }
-  };
+        try {
+            await addReply({
+                complaintId: Number(complaintId),
+                message: newMessage,
+            }).unwrap();
+
+            setNewMessage("");
+        } catch (error) {
+            console.error("Error sending reply:", error);
+        }
+    };
+
 
   const getSenderLabel = (senderId: number | null) => {
     if (!senderId || senderId === user?.userId) return "patient";
