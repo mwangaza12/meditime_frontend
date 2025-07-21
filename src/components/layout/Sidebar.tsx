@@ -1,9 +1,19 @@
-import {Car,Home,MapPin,Package,Users,BookAIcon,Calendar, SpeechIcon,} from "lucide-react";
+import {
+  Car,
+  Home,
+  MapPin,
+  Package,
+  Users,
+  BookOpen,
+  Calendar,
+  MessageSquare,
+  Search,
+} from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
 import { BsPrescription } from "react-icons/bs";
-import { FaMoneyBill, FaPage4 } from "react-icons/fa";
+import { FaMoneyBill } from "react-icons/fa";
 
 export const Sidebar = () => {
   const { pathname } = useLocation();
@@ -19,46 +29,100 @@ export const Sidebar = () => {
     },
     appointment: {
       name: "Appointments",
-      path: role === "doctor" ? "/doctor-dashboard/appointments" : "/user-dashboard/appointments",
+      path:
+        role === "doctor"
+          ? "/doctor-dashboard/appointments"
+          : "/user-dashboard/appointments",
       icon: Calendar,
       color: "from-[#093FB4] to-[#093FB4]",
     },
     prescription: {
       name: "Prescriptions",
-      path: role === "doctor" ? "/doctor-dashboard/prescriptions" : "/user-dashboard/prescriptions",
+      path:
+        role === "doctor"
+          ? "/doctor-dashboard/prescriptions"
+          : "/user-dashboard/prescriptions",
       icon: BsPrescription,
       color: "from-red-500 to-red-600",
     },
     payment: {
       name: "Payments",
-      path: role === "doctor" ? "/doctor-dashboard/payments" : "/user-dashboard/payments",
+      path:
+        role === "doctor"
+          ? "/doctor-dashboard/payments"
+          : "/user-dashboard/payments",
       icon: FaMoneyBill,
-      color: "from-orange-500 to-orange-700"
+      color: "from-orange-500 to-orange-700",
     },
     complaint: {
       name: "Complaints",
       path: "/user-dashboard/complaints",
-      icon: FaPage4,
-      color: "from-teal-500 to-teal-600"
+      icon: Package,
+      color: "from-teal-500 to-teal-600",
     },
     browseDoctors: {
       name: "Browse Doctors",
       path: "/browse-doctors",
-      icon: FaPage4,
-      color: "from-purple-500 to-purple-600"
-    }
+      icon: Search,
+      color: "from-purple-500 to-purple-600",
+    },
   };
 
   const adminMenuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: Home, color: "from-[#093FB4] to-[#093FB4]" },
-    { name: "Doctors", path: "/dashboard/doctors", icon: BookAIcon, color: "from-teal-500 to-teal-600" },
-    { name: "Complaints", path: "/dashboard/complaints", icon: Package, color: "from-orange-500 to-orange-600" },
-    { name: "Users", path: "/dashboard/users", icon: Users, color: "from-purple-500 to-purple-600" },
-    { name: "Payments", path: "/dashboard/payments", icon: Car, color: "from-cyan-500 to-cyan-600" },
-    { name: "Appointments", path: "/dashboard/appointments", icon: MapPin, color: "from-pink-500 to-pink-600" },
-    { name: "Prescriptions", path: "/dashboard/prescriptions", icon: BsPrescription, color: "from-red-500 to-red-600" },
-    { name: "Specialization", path: "/dashboard/specializations", icon: SpeechIcon, color: "from-indigo-500 to-indigo-600" },
-    { name: "Doctor-availability", path: "/dashboard/doctor-availability", icon: SpeechIcon, color: "from-indigo-500 to-indigo-600" },
+    {
+      name: "Dashboard",
+      path: "/dashboard",
+      icon: Home,
+      color: "from-[#093FB4] to-[#093FB4]",
+    },
+    {
+      name: "Doctors",
+      path: "/dashboard/doctors",
+      icon: BookOpen,
+      color: "from-teal-500 to-teal-600",
+    },
+    {
+      name: "Complaints",
+      path: "/dashboard/complaints",
+      icon: Package,
+      color: "from-orange-500 to-orange-600",
+    },
+    {
+      name: "Users",
+      path: "/dashboard/users",
+      icon: Users,
+      color: "from-purple-500 to-purple-600",
+    },
+    {
+      name: "Payments",
+      path: "/dashboard/payments",
+      icon: Car,
+      color: "from-cyan-500 to-cyan-600",
+    },
+    {
+      name: "Appointments",
+      path: "/dashboard/appointments",
+      icon: MapPin,
+      color: "from-pink-500 to-pink-600",
+    },
+    {
+      name: "Prescriptions",
+      path: "/dashboard/prescriptions",
+      icon: BsPrescription,
+      color: "from-red-500 to-red-600",
+    },
+    {
+      name: "Specialization",
+      path: "/dashboard/specializations",
+      icon: MessageSquare,
+      color: "from-indigo-500 to-indigo-600",
+    },
+    {
+      name: "Doctor Availability",
+      path: "/dashboard/doctor-availability",
+      icon: Calendar,
+      color: "from-indigo-500 to-indigo-600",
+    },
   ];
 
   const userMenuItems = [
@@ -67,7 +131,7 @@ export const Sidebar = () => {
     baseLinks.prescription,
     baseLinks.payment,
     baseLinks.complaint,
-    baseLinks.browseDoctors
+    baseLinks.browseDoctors,
   ];
 
   const doctorMenuItems = [
@@ -83,10 +147,14 @@ export const Sidebar = () => {
       ? doctorMenuItems
       : userMenuItems;
 
-  const roleTitle = role === "admin" ? "Admin" : role === "doctor" ? "Doctor" : "User";
+  const roleTitle =
+    role === "admin" ? "Admin" : role === "doctor" ? "Doctor" : "User";
   const roleSubtitle =
-    role === "admin" ? "Management Portal" : role === "doctor" ? "Doctor Panel" : "User Dashboard";
-
+    role === "admin"
+      ? "Management Portal"
+      : role === "doctor"
+      ? "Doctor Panel"
+      : "User Dashboard";
 
   return (
     <aside className="bg-white w-72 h-screen shadow-xl fixed top-0 left-0 z-40 border-r border-slate-200 overflow-y-auto">
@@ -101,7 +169,8 @@ export const Sidebar = () => {
 
       <nav className="flex flex-col mt-8 px-4 space-y-2 pb-6">
         {menuItems.map(({ name, path, icon: Icon, color }) => {
-          const isActive = pathname === path || pathname.startsWith(path + "/");
+          const isActive =
+            pathname === path || pathname.startsWith(path + "/");
 
           return (
             <NavLink
@@ -120,7 +189,11 @@ export const Sidebar = () => {
                     : "bg-slate-100 group-hover:bg-slate-200"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-600"}`} />
+                <Icon
+                  className={`w-4 h-4 ${
+                    isActive ? "text-white" : "text-slate-600"
+                  }`}
+                />
               </div>
               <span className="font-medium">{name}</span>
               {isActive && (

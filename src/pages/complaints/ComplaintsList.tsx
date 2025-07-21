@@ -1,8 +1,9 @@
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Table } from "../../components/table/Table";
 import { Spinner } from "../../components/loader/Spinner";
-import { useMemo } from "react";
 import { complaintApi } from "../../feature/api/complaintApi";
-import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
 
 interface Complaint {
@@ -16,20 +17,28 @@ interface Complaint {
 }
 
 export const ComplaintsList = () => {
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
 
+  // Admin fetches all complaints
   const {
     data: allComplaints = [],
     error: adminError,
     isLoading: adminLoading,
-  } = complaintApi.useGetAllComplaintsQuery({ page: 1, pageSize: 10 }, { skip: !isAdmin });
+  } = complaintApi.useGetAllComplaintsQuery(
+    { page: 1, pageSize: 10 },
+    { skip: !isAdmin }
+  );
 
+  // User fetches their complaints
   const {
     data: userComplaints = [],
     error: userError,
     isLoading: userLoading,
-  } = complaintApi.useGetUserComplaintsQuery(user?.userId, { skip: isAdmin || !user?.userId });
+  } = complaintApi.useGetUserComplaintsQuery(user?.userId, {
+    skip: isAdmin || !user?.userId,
+  });
 
   const complaintsData = isAdmin ? allComplaints : userComplaints;
   const isLoading = isAdmin ? adminLoading : userLoading;
@@ -55,7 +64,8 @@ export const ComplaintsList = () => {
     () =>
       (complaintsData || []).map((item: any) => ({
         id: String(item.complaintId),
-        userName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim() || "Unknown",
+        userName:
+          `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim() || "Unknown",
         appointmentDate: item.appointment?.appointmentDate || "N/A",
         subject: item.subject || "No subject",
         complaintText: item.description || "No details provided",
@@ -97,8 +107,25 @@ export const ComplaintsList = () => {
         ),
       },
       { header: "Created At", accessor: (row: Complaint) => row.createdAt },
+      {
+        header: "Actions",
+        accessor: (row: Complaint) => (
+          <button
+            onClick={() =>
+              navigate(
+                isAdmin
+                  ? `/dashboard/complaints/${row.id}`
+                  : `/user-dashboard/complaints/${row.id}`
+              )
+            }
+            className="text-blue-600 hover:underline text-sm"
+          >
+             Chat
+          </button>
+        ),
+      },
     ],
-    []
+    [navigate]
   );
 
   return (

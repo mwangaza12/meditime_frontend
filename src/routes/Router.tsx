@@ -24,6 +24,7 @@ import { ForgotPassword } from "../pages/auth/ForgotPassword";
 import { ResetPassword } from "../pages/auth/ResetPassword";
 import { AllDoctors } from "../pages/doctors/AllDoctors";
 import { PatientAppointment } from "../pages/appointments/PatientAppointment";
+import ComplaintChat from "../pages/complaints/ComplaintChat";
 
 export const router = createBrowserRouter([
   {
@@ -126,7 +127,11 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      }
+      },
+      {
+        path: "complaints/:complaintId",   // ⬅️ Add this line
+        element: <ComplaintChat />,
+      },
     ],
   },
 
@@ -167,7 +172,11 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      }
+      },
+      {
+        path: "complaints/:complaintId",
+        element: <ComplaintChat />,
+      },
     ],
   },
 

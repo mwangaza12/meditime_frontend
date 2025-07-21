@@ -41,5 +41,19 @@ export const complaintApi = createApi({
             }),
             providesTags: ['Complaints']
         }),
+
+        getComplaintReplies: builder.query({
+            query: (complaintId: number) => `/complaints/${complaintId}/replies`,
+            providesTags: ["Complaints"]
+        }),
+
+         addComplaintReply: builder.mutation({
+            query: ({ complaintId, message }) => ({
+                url: `/complaints/${complaintId}/replies`,
+                method: "POST",
+                body: { message },
+            }),
+            invalidatesTags: ["Complaints"]
+        }),
     })
 })
