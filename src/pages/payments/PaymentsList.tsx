@@ -44,7 +44,6 @@ export const PaymentsList = () => {
 
     return Array.isArray(records)
       ? records.flatMap((record: any) => {
-          // For admin: root-level payment object with embedded appointment
           if (record.appointment) {
             const appointment = record.appointment;
             const patientUser = appointment?.user;
@@ -70,7 +69,6 @@ export const PaymentsList = () => {
             ];
           }
 
-          // For doctor or user: appointment object with payments[]
           const appointment = record;
           const patientUser = appointment?.user;
           const doctorUser = appointment?.doctor?.user;
@@ -155,6 +153,14 @@ export const PaymentsList = () => {
     setPage(1);
   };
 
+  const getErrorMessage = (error: any): string => {
+    if (!error) return "Unknown error occurred.";
+    if (typeof error === "string") return error;
+    if (typeof error.data === "string") return error.data;
+    if (typeof error.data?.message === "string") return error.data.message;
+    return "Failed to load payments.";
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -182,7 +188,7 @@ export const PaymentsList = () => {
       {isLoading ? (
         <Spinner />
       ) : error ? (
-        <p className="text-red-500">Failed to load payments.</p>
+        <p className="text-red-500">{getErrorMessage(error)}</p>
       ) : mappedPayments.length === 0 ? (
         <p className="text-gray-500 italic">No payments found.</p>
       ) : (

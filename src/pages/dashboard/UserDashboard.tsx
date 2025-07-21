@@ -17,6 +17,7 @@ dayjs.extend(isSameOrAfter);
 const localizer = momentLocalizer(moment);
 
 type CalendarEvent = {
+  original: any;
   id: string;
   title: string;
   start: Date;
@@ -64,29 +65,40 @@ export const UserDashboard = () => {
   }, [appointments]);
 
   const appointmentEvents: CalendarEvent[] = useMemo(() => {
-    return upcomingAppointments.map((appointment: any) => {
-      const start = new Date(appointment.appointmentDate);
-      const end = new Date(appointment.appointmentDate);
+  return upcomingAppointments.map((appointment: any) => {
+    const start = new Date(appointment.appointmentDate);
+    const end = new Date(appointment.appointmentDate);
 
-      if (appointment.timeSlot) {
-        const [time, period] = appointment.timeSlot.split(' ');
-        let [hour, minute] = time.split(':').map(Number);
-        if (period === 'PM' && hour < 12) hour += 12;
-        start.setHours(hour, minute || 0);
-        end.setHours(hour, (minute || 0) + 30);
-      }
+    if (appointment.timeSlot) {
+      const [time, period] = appointment.timeSlot.split(' ');
+      let [hour, minute] = time.split(':').map(Number);
+      if (period === 'PM' && hour < 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+      start.setHours(hour, minute || 0);
+      end.setHours(hour, (minute || 0) + 30);
+    }
 
-      return {
-        id: appointment.appointmentId,
-        title: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
-        start,
-        end,
-        allDay: false,
-      };
-    });
-  }, [upcomingAppointments]);
+    return {
+      id: appointment.appointmentId,
+      title: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
+      start,
+      end,
+      allDay: false,
+      original: appointment, // optional: include original data for reference
+    };
+  });
+}, [upcomingAppointments]);
 
-  const nextAppointment = upcomingAppointments[0];
+// ✅ Determine the next upcoming appointment (sorted by start time)
+const nextAppointment = useMemo(() => {
+  const now = new Date();
+
+  const upcoming = appointmentEvents
+    .filter(event => event.start > now)
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  return upcoming.length > 0 ? upcoming[0].original : null;
+}, [appointmentEvents]);
 
   const totalAmountUsed = useMemo(() => {
     return appointments.reduce((sum: number, appointment: any) => {
