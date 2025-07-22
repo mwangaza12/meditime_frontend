@@ -1,12 +1,16 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Eye, Edit, Trash2, Phone } from "lucide-react";
 import { Table } from "../../components/table/Table";
 import { userApi } from "../../feature/api/userApi";
 import { Spinner } from "../../components/loader/Spinner";
 import { toast } from "react-hot-toast";
+import { UserModal } from "./UserModal";
 
-interface User {
+
+// --- UserModal component ---
+export interface User {
   userId: number;
+  profileImageUrl: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -16,15 +20,14 @@ interface User {
   role: "admin" | "doctor" | "user";
 }
 
-
+// --- UserList component ---
 export const UserList = () => {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(5);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
-  const { data, isLoading, refetch } = userApi.useGetAllUsersQuery({
-    page,
-    pageSize,
-  });
+  const { data, isLoading, refetch } = userApi.useGetAllUsersQuery({ page, pageSize });
 
   const users: User[] = Array.isArray(data) ? data as User[] : data?.users || [];
   const totalCount: number = data?.total ?? users.length;
@@ -48,15 +51,28 @@ export const UserList = () => {
     setPage(1);
   };
 
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user);
+    setIsUserModalOpen(true);
+  };
+
   const columns = [
     {
       header: "User",
       accessor: (user: User) => (
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mr-3">
-            <span className="text-white font-medium text-sm">
-              {`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`}
-            </span>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3">
+            {user.profileImageUrl ? (
+              <img
+                src={user.profileImageUrl}
+                alt="User avatar"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-sm font-medium">
+                {`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`}
+              </div>
+            )}
           </div>
           <div>
             <div className="font-medium text-slate-800">{user.firstName} {user.lastName}</div>
@@ -99,9 +115,12 @@ export const UserList = () => {
     },
     {
       header: "Actions",
-      accessor: () => (
+      accessor: (user: User) => (
         <div className="flex space-x-2">
-          <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+          <button
+            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+            onClick={() => handleViewUser(user)}
+          >
             <Eye className="w-4 h-4" />
           </button>
           <button className="p-1 text-green-600 hover:bg-green-50 rounded">
@@ -166,6 +185,13 @@ export const UserList = () => {
           </div>
         </>
       )}
+
+      {/* Modal */}
+      <UserModal
+        show={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        user={selectedUser}
+      />
     </div>
   );
 };
