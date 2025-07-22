@@ -209,7 +209,7 @@ export const AppointmentModal = ({
 
           <div className="text-right">
             <p className="text-sm text-gray-600">Consultation Fee</p>
-            <p className="text-2xl font-bold text-green-600">${fee}</p>
+            <p className="text-2xl font-bold text-green-600">Ksh. {fee}</p>
           </div>
         </div>
       </div>
@@ -274,7 +274,7 @@ export const AppointmentModal = ({
               <p><strong>Doctor:</strong> Dr. {doctor?.user?.firstName} {doctor?.user?.lastName}</p>
               <p><strong>Date:</strong> {availableDates.find(d => d.value === selectedDate)?.label}</p>
               <p><strong>Time:</strong> {selectedTime}</p>
-              <p><strong>Fee:</strong> ${fee}</p>
+              <p><strong>Fee:</strong> Ksh.{fee}</p>
             </div>
           </div>
         )}

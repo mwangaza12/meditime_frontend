@@ -32,23 +32,29 @@ export const AllDoctors = () => {
 
   const { data: doctorsData, isLoading: doctorsLoading, error: doctorsError } =
     doctorApi.useGetAllDoctorsQuery({ page: 1, pageSize: 1000 });
+
   const { data: specializationsData, isLoading: specializationsLoading, error: specializationsError } =
     specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 50 });
 
   const allDoctors = doctorsData?.doctors || [];
   const specializations = specializationsData?.specializations || [];
-  const specialties = ['All Specialties', ...specializations.map((s: any) => s.name)];
+
+  const specialties = [
+    'All Specialties',
+    ...specializations.map((s: any) => s.name?.trim()).filter(Boolean),
+  ];
 
   const filteredDoctors = allDoctors.filter((doctor: any) => {
     const fullName = `${doctor.user.firstName} ${doctor.user.lastName}`.toLowerCase();
-    const specialty = doctor.specialization?.name?.toLowerCase() || '';
+    const specialty = doctor.specialization?.name?.toLowerCase().trim() || '';
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) ||
       specialty.includes(searchTerm.toLowerCase()) ||
       doctor.user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesSpecialty =
-      selectedSpecialty === 'All Specialties' || doctor.specialization?.name === selectedSpecialty;
+      selectedSpecialty === 'All Specialties' ||
+      (doctor.specialization?.name?.trim().toLowerCase() === selectedSpecialty.trim().toLowerCase());
 
     const matchesAvailability =
       selectedAvailability === 'All Availability' ||
@@ -149,7 +155,7 @@ export const AllDoctors = () => {
       <div className="bg-white mb-4">
         <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-blue-800">All Doctors</h1>
+            <h1 className="text-2xl font-bold text-blue-800">Our Doctors</h1>
             <p className="text-sm text-gray-500">Browse healthcare professionals</p>
           </div>
           <div className="text-right">
@@ -326,7 +332,7 @@ export const AllDoctors = () => {
 
 
       {showBookingModal && selectedDoctor && (
-        <Modal title="Create Appointment" show={showBookingModal} onClose={closeModals} width="max-w-xl">
+        <Modal title="Schedule Appointment" show={showBookingModal} onClose={closeModals} width="max-w-xl">
           <AppointmentModal onClose={closeModals} doctor={selectedDoctor} />
         </Modal>
       )}

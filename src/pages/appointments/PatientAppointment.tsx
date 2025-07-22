@@ -40,8 +40,6 @@ export const PatientAppointment = () => {
     user?.userId ? { userId: user.userId, page, pageSize } : skipToken
   );
 
-  console.log(userData);
-
   const [changeStatus] = appointmentApi.useChangeAppointmentStatusMutation();
 
   const mapStatus = (status: string): Appointment["status"] => {

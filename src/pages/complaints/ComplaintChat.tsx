@@ -23,6 +23,8 @@ export default function ComplaintChat() {
 
 const replies = data?.replies ?? [];
 
+console.log(replies);
+
 
   const [addReply, { isLoading: isSending }] = complaintApi.useAddComplaintReplyMutation();
 
