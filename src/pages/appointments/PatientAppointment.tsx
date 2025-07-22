@@ -13,6 +13,9 @@ interface Appointment {
   id: string;
   patientName: string;
   doctorName: string;
+  doctor: {
+    profileImageUrl: string;
+  }
   specialization?: string;
   date: string;
   startTime: string;
@@ -36,6 +39,8 @@ export const PatientAppointment = () => {
   } = appointmentApi.useGetAppointmentsByUserIdQuery(
     user?.userId ? { userId: user.userId, page, pageSize } : skipToken
   );
+
+  console.log(userData);
 
   const [changeStatus] = appointmentApi.useChangeAppointmentStatusMutation();
 
@@ -71,6 +76,7 @@ export const PatientAppointment = () => {
           patientName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim(),
           doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
           specialization: item?.doctor?.specialization?.name || "",
+          doctor: item?.doctor?.user,
           date: item.appointmentDate,
           startTime,
           status: mapStatus(item.appointmentStatus),
@@ -127,17 +133,7 @@ export const PatientAppointment = () => {
   const canCancel = (appointment: Appointment) =>
     appointment.status === "pending" || appointment.status === "confirmed";
 
-  const StatCard = ({
-    title,
-    value,
-    icon: Icon,
-    color,
-  }: {
-    title: string;
-    value: number;
-    icon: any;
-    color: string;
-  }) => (
+  const StatCard = ({title,value,icon: Icon,color,}: {title: string;value: number;icon: any;color: string;}) => (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
@@ -224,9 +220,18 @@ export const PatientAppointment = () => {
                       <tr key={appointment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-start">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                              <User className="w-4 h-4 text-blue-600" />
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 overflow-hidden">
+                              {appointment.doctor.profileImageUrl ? (
+                                <img
+                                  src={appointment.doctor.profileImageUrl}
+                                  alt="Doctor"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <User className="w-4 h-4 text-blue-600" />
+                              )}
                             </div>
+
                             <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {appointment.doctorName}
