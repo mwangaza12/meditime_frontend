@@ -5,12 +5,11 @@ import { Header } from './Header';
 
 export const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const path = useLocation().pathname.split('/')[2] || 'dashboard';
+  const path = useLocation().pathname.split("/")[2] || "dashboard";
   const currentSection = path.charAt(0).toUpperCase() + path.slice(1);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-white flex">
+    <div className="flex flex-col flex-1 w-full overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
@@ -20,8 +19,10 @@ export const AppLayout = () => {
         <Header currentSection={currentSection} setSidebarOpen={setSidebarOpen} />
 
         {/* Page Content */}
-        <main className="p-6 bg-slate-50 min-h-[calc(100vh-80px)]">
-          <Outlet />
+        <main className="p-6 bg-slate-50 min-h-[calc(100vh-80px)] w-full overflow-x-hidden">
+          <div className="w-full overflow-x-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -31,3 +31,19 @@ export type CalendarEvent = {
     end: Date;
     allDay?: boolean;
 };
+
+export interface Appointment {
+  id: string;
+  patientName: string;
+  doctorName: string;
+  doctor: {
+    profileImageUrl: string;
+  }
+  specialization?: string;
+  date: string;
+  startTime: string;
+  status: "pending" | "cancelled" | "confirmed";
+  durationMinutes: number;
+  totalAmount?: number;
+  isPaid?: boolean;
+}

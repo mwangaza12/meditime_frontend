@@ -17,14 +17,7 @@ interface DataTableProps<T> {
   selectable?: boolean;
 }
 
-export function Table<T>({
-  columns,
-  data,
-  loading = false,
-  error = false,
-  emptyText = "No records found.",
-  selectable = false,
-}: DataTableProps<T>) {
+export function Table<T>({columns,data,loading = false,error = false,emptyText = "No records found.",selectable = false,}: DataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
   const toggleRow = (index: number) => {
@@ -38,8 +31,8 @@ export function Table<T>({
   if (data.length === 0) return <p className="p-4 text-slate-500">{emptyText}</p>;
 
   return (
-    <div className="overflow-x-auto border rounded-md">
-      <table className="w-full">
+    <div className="w-full overflow-x-auto rounded-md border-slate-200">
+    <table className="min-w-full table-auto text-sm text-left border rounded-md divide-y divide-slate-200">
         <thead className="bg-slate-100">
           <tr>
             {selectable && <th className="px-4 py-3"></th>}
@@ -48,7 +41,7 @@ export function Table<T>({
                 key={idx}
                 onClick={col.onHeaderClick}
                 className={clsx(
-                  "px-4 py-3 text-left text-sm font-semibold text-slate-700",
+                  "px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap",
                   col.className
                 )}
               >
@@ -57,20 +50,21 @@ export function Table<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-100">
           {data.map((row, rowIndex) => (
             <tr
               key={rowIndex}
-              className={clsx("hover:bg-slate-50", {
+              className={clsx("hover:bg-slate-50 transition-colors", {
                 "bg-slate-100": selectedRows.includes(rowIndex),
               })}
             >
               {selectable && (
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedRows.includes(rowIndex)}
                     onChange={() => toggleRow(rowIndex)}
+                    className="checkbox checkbox-sm"
                   />
                 </td>
               )}
@@ -83,7 +77,10 @@ export function Table<T>({
                     : null;
 
                 return (
-                  <td key={colIndex} className="px-4 py-3 text-sm text-slate-700">
+                  <td
+                    key={colIndex}
+                    className="px-4 py-3 text-slate-700 whitespace-nowrap"
+                  >
                     {content}
                   </td>
                 );

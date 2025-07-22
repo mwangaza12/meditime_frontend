@@ -21,7 +21,6 @@ export const ComplaintsList = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
 
-  // Admin fetches all complaints
   const {
     data: allComplaints = [],
     error: adminError,
@@ -31,7 +30,6 @@ export const ComplaintsList = () => {
     { skip: !isAdmin }
   );
 
-  // User fetches their complaints
   const {
     data: userComplaints = [],
     error: userError,
@@ -118,42 +116,50 @@ export const ComplaintsList = () => {
                   : `/user-dashboard/complaints/${row.id}`
               )
             }
-            className="text-blue-600 hover:underline text-sm"
+            className="text-blue-600 hover:underline text-sm whitespace-nowrap"
           >
-             Chat
+            Chat
           </button>
         ),
       },
     ],
-    [navigate]
+    [navigate, isAdmin]
   );
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-gray-600">
-            {isAdmin ? "Manage all patient complaints" : "View and submit your complaints"}
-          </p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-gray-600">
+              {isAdmin
+                ? "Manage all patient complaints"
+                : "View and submit your complaints"}
+            </p>
+          </div>
         </div>
-      </div>
 
-      {isLoading ? (
-        <Spinner />
-      ) : isEmptyError || mappedComplaints.length === 0 ? (
-        <p className="text-gray-500 italic">
-          {isAdmin ? "No complaints found." : "You have not submitted any complaints yet."}
-        </p>
-      ) : error ? (
-        <p className="text-red-500">Failed to load complaints.</p>
-      ) : (
-        <Table
-          columns={columns}
-          data={mappedComplaints}
-          selectable={isAdmin}
-          emptyText="No complaints found."
-        />
-      )}
+        {isLoading ? (
+          <Spinner />
+        ) : isEmptyError || mappedComplaints.length === 0 ? (
+          <p className="text-gray-500 italic">
+            {isAdmin
+              ? "No complaints found."
+              : "You have not submitted any complaints yet."}
+          </p>
+        ) : error ? (
+          <p className="text-red-500">Failed to load complaints.</p>
+        ) : (
+          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <Table
+              columns={columns}
+              data={mappedComplaints}
+              selectable={isAdmin}
+              emptyText="No complaints found."
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
