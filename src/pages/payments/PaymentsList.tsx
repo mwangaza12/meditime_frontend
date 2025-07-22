@@ -165,7 +165,6 @@ export const PaymentsList = () => {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payments</h1>
           <p className="text-gray-600">
             View all payments associated with your appointments
           </p>

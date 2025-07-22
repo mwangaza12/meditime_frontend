@@ -69,7 +69,7 @@ export const UserList = () => {
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center text-sm font-medium">
                 {`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`}
               </div>
             )}

@@ -71,7 +71,6 @@ export const PrescriptionList = () => {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Prescriptions</h1>
           <p className="text-gray-600">View and manage all prescriptions</p>
         </div>
 
