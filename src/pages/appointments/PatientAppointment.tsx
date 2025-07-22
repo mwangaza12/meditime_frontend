@@ -165,7 +165,7 @@ export const PatientAppointment = () => {
         {/* Table */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Appointments</h2>
+            <h2 className="text-lg font-semibold text-blue-800">Recent Appointments</h2>
             <div className="flex items-center space-x-2">
               <label className="text-sm text-gray-600">Show:</label>
               <select
@@ -203,7 +203,7 @@ export const PatientAppointment = () => {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-blue-50">
                     <tr>
                       {["Doctor", "Date", "Time", "Duration", "Status", "Amount", "Payment", "Actions"].map((h) => (
                         <th
