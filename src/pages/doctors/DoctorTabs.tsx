@@ -5,7 +5,7 @@ export const DoctorTabs = () => {
   const [activeTab, setActiveTab] = useState<'doctors' | 'users'>('doctors');
 
   return (
-    <div className="min-h-screen bg-slate-100 py-10 px-4">
+    <div className="min-h-screen py-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Tabs */}
         <div className="flex space-x-4 mb-6 justify-center">
