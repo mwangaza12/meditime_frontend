@@ -2,13 +2,33 @@ import React, { useMemo, useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { format } from 'date-fns';
-import {Users,ClipboardList,DollarSign,TrendingUp,Activity,} from 'lucide-react';
-import {LineChart,Line,XAxis,YAxis,CartesianGrid,Tooltip,BarChart,Bar,ResponsiveContainer,PieChart,Pie,Cell,AreaChart,Area,} from 'recharts';
+import {
+  Users,
+  ClipboardList,
+  DollarSign,
+  TrendingUp,
+  Activity,
+} from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+} from 'recharts';
 import { userApi } from '../../feature/api/userApi';
 import { appointmentApi } from '../../feature/api/appointmentApi';
 import { paymentApi } from '../../feature/api/paymentApi';
 import { Modal } from '../../components/modal/Modal';
-
 
 const appointmentStatusColors: Record<string, string> = {
   confirmed: '#10B981',
@@ -26,16 +46,8 @@ interface StatCardProps {
   iconColor: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
-  title,
-  value,
-  change,
-  changeType,
-  icon: Icon,
-  bgColor,
-  iconColor,
-}) => (
-  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+const StatCard: React.FC<StatCardProps> = ({title,value,change,changeType,icon: Icon,bgColor,iconColor,}) => (
+  <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-gray-600">{title}</p>
@@ -82,12 +94,10 @@ export const AdminDashboard = () => {
     }, 0) || 0;
   }, [paymentsData]);
 
-   // Monthly Revenue Chart Data
   const dynamicRevenueData = useMemo(() => {
     if (!paymentsData) return [];
 
     const revenueMap: Record<string, number> = {};
-
     paymentsData.forEach((payment: any) => {
       const date = new Date(payment.createdAt);
       const month = date.toLocaleString('default', { month: 'short' });
@@ -96,14 +106,12 @@ export const AdminDashboard = () => {
     });
 
     const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
     return monthOrder.map((month) => ({
       month,
       revenue: revenueMap[month] || 0,
     }));
   }, [paymentsData]);
 
-  // Completion Rate
   const completionRate = useMemo(() => {
     if (!appointmentData || appointmentData.length === 0) return 0;
     const confirmedCount = appointmentData.filter((a: any) => a.appointmentStatus === 'confirmed').length;
@@ -180,7 +188,7 @@ export const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* === STAT CARDS === */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
           <StatCard title="Total Users" value={usersLoading ? 'Loading...' : totalUsers.toString()} change="+4.2" changeType="increase" icon={Users} bgColor="bg-blue-50" iconColor="text-blue-600" />
           <StatCard title="Appointments" value={appointmentsLoading ? 'Loading...' : totalAppointments.toString()} change="+12.5" changeType="increase" icon={ClipboardList} bgColor="bg-green-50" iconColor="text-green-600" />
           <StatCard title="Revenue" value={paymentsLoading ? 'Loading...' : `Ksh. ${totalAmountUsed}`} change="+8.1" changeType="increase" icon={DollarSign} bgColor="bg-purple-50" iconColor="text-purple-600" />
@@ -190,22 +198,24 @@ export const AdminDashboard = () => {
         {/* === CHARTS === */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Revenue Chart */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Overview</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={dynamicRevenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
-                <Area type="monotone" dataKey="revenue" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.1} />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-blue-800 mb-4">Revenue Overview</h3>
+            <div className="overflow-x-auto">
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={dynamicRevenueData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`Ksh. ${value}`, 'Revenue']} />
+                  <Area type="monotone" dataKey="revenue" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.1} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Appointment Status Pie Chart */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Appointment Status</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-blue-800 mb-4">Appointment Status</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={appointmentStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
@@ -216,9 +226,9 @@ export const AdminDashboard = () => {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center space-x-4 mt-4">
+            <div className="flex flex-wrap justify-center space-x-4 mt-4">
               {appointmentStatusData.map((item, index) => (
-                <div key={index} className="flex items-center">
+                <div key={index} className="flex items-center mb-2">
                   <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: item.color }}></div>
                   <span className="text-sm text-gray-600">{item.name}: {item.value}</span>
                 </div>
@@ -227,11 +237,11 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* === BOTTOM ROW: USER GROWTH / WEEKLY ACTIVITY / RECENT APPOINTMENTS === */}
+        {/* === USER GROWTH & WEEKLY ACTIVITY === */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* User Growth */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-blue-800 mb-4">User Growth</h3>
             {usersLoading ? <p className="text-sm text-gray-500">Loading...</p> :
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={dynamicUserGrowthData}>
@@ -245,8 +255,8 @@ export const AdminDashboard = () => {
           </div>
 
           {/* Weekly Activity */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Activity</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-blue-800 mb-4">Weekly Activity</h3>
             {appointmentsLoading ? <p className="text-sm text-gray-500">Loading...</p> :
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={dynamicWeeklyActivityData}>
@@ -260,7 +270,7 @@ export const AdminDashboard = () => {
           </div>
 
           {/* Recent Appointments */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Appointments</h3>
             <div className="space-y-4">
               {appointmentsLoading ? <p className="text-sm text-gray-500">Loading appointments...</p> :
@@ -286,18 +296,20 @@ export const AdminDashboard = () => {
         </div>
 
         {/* === CALENDAR === */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Appointment Calendar</h3>
           {appointmentsLoading ? <p className="text-sm text-gray-500">Loading calendar...</p> :
-            <Calendar
-              onClickDay={handleDateClick}
-              tileClassName={({ date, view }) => {
-                if (view === 'month' && bookedDates.includes(date.toDateString())) {
-                  return 'bg-blue-100 text-blue-800 font-semibold rounded-full';
-                }
-                return '';
-              }}
-            />}
+            <div className="overflow-x-auto">
+              <Calendar
+                onClickDay={handleDateClick}
+                tileClassName={({ date, view }) => {
+                  if (view === 'month' && bookedDates.includes(date.toDateString())) {
+                    return 'bg-blue-100 text-blue-800 font-semibold rounded-full';
+                  }
+                  return '';
+                }}
+              />
+            </div>}
         </div>
 
         {/* === MODAL === */}
@@ -335,8 +347,6 @@ export const AdminDashboard = () => {
             <p className="text-sm text-gray-500">No appointments found.</p>
           )}
         </Modal>
-
-
       </div>
     </div>
   );

@@ -22,3 +22,12 @@ export interface AvailabilityResponse {
     availabilities: Availability[];
     total: number;
 }
+
+export type CalendarEvent = {
+    original: any;
+    id: string;
+    title: string;
+    start: Date;
+    end: Date;
+    allDay?: boolean;
+};

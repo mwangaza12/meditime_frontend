@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Calendar as BigCalendar, momentLocalizer, type View } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Swal from 'sweetalert2';
@@ -11,19 +11,12 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { prescriptionApi } from '../../feature/api/prescriptionApi';
 import { paymentApi } from '../../feature/api/paymentApi';
 import moment from 'moment';
+import { StatCard } from '../../components/cards/StatCard';
+import type { CalendarEvent } from '../../types/types';
 
 dayjs.extend(isSameOrAfter);
 
 const localizer = momentLocalizer(moment);
-
-type CalendarEvent = {
-  original: any;
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  allDay?: boolean;
-};
 
 
 const notifications = [
@@ -31,21 +24,6 @@ const notifications = [
   { id: 2, message: "Lab results are ready for review", time: "1 day ago", type: "results" },
   { id: 3, message: "Time to take your medication: Metformin", time: "3 hours ago", type: "medication" }
 ];
-
-const StatCard = ({title, value, subtitle, icon: Icon, bgColor, iconColor}: {title: string;value: string;subtitle?: string;icon: React.ElementType;bgColor: string;iconColor: string;}) => (
-  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
-      </div>
-      <div className={`w-12 h-12 ${bgColor} rounded-xl flex items-center justify-center`}>
-        <Icon className={`w-6 h-6 ${iconColor}`} />
-      </div>
-    </div>
-  </div>
-);
 
 export const UserDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
