@@ -6,7 +6,7 @@ import type { AvailabilityResponse } from "../../types/types";
 export const doctorAvailabilityApi = createApi({
   reducerPath: "doctorAvailabilityApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api/",
+    baseUrl: import.meta.env.VITE_BACKEND_URL,
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as RootState).auth.token;
       if (token) {
