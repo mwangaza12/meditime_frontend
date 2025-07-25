@@ -240,9 +240,6 @@ export const PatientAppointment = () => {
       <div className="max-w-7xl mx-auto w-full">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-            My Appointments
-          </h1>
           <p className="text-sm sm:text-base text-gray-600">
             Manage your medical appointments and track their status
           </p>

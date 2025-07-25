@@ -33,7 +33,7 @@ export function Table<T>({columns,data,loading = false,error = false,emptyText =
   return (
     <div className="w-full overflow-x-auto rounded-md border-slate-200">
     <table className="min-w-full table-auto text-sm text-left border rounded-md divide-y divide-slate-200">
-        <thead className="bg-slate-100">
+        <thead className="bg-blue-100">
           <tr>
             {selectable && <th className="px-4 py-3"></th>}
             {columns.map((col, idx) => (
@@ -41,7 +41,7 @@ export function Table<T>({columns,data,loading = false,error = false,emptyText =
                 key={idx}
                 onClick={col.onHeaderClick}
                 className={clsx(
-                  "px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap",
+                  "px-4 py-3 text-left font-semibold text-blue-800 whitespace-nowrap",
                   col.className
                 )}
               >

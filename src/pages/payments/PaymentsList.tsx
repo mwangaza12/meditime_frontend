@@ -295,9 +295,6 @@ export const PaymentsList = () => {
       <div className="max-w-7xl mx-auto w-full">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-            Payment History
-          </h1>
           <p className="text-sm sm:text-base text-gray-600">
             View all payments associated with your appointments
           </p>
