@@ -56,5 +56,14 @@ export const complaintApi = createApi({
             invalidatesTags: ["Complaints"],
         }),
 
+        changeComplaintStatus: builder.mutation({
+            query: ({ complaintId, status }) => ({
+                url: `/complaints/${complaintId}/status`,
+                method: "PATCH",
+                body: { status },
+            }),
+            invalidatesTags: ["Complaints"],
+        }),
+
     })
 })

@@ -12,7 +12,7 @@ interface Complaint {
   appointmentDate: string;
   subject: string;
   complaintText: string;
-  status: "pending" | "resolved" | "rejected";
+  status: "open" | "inProgress" | "resolved" | "closed";
   createdAt: string;
 }
 
@@ -38,6 +38,8 @@ export const ComplaintsList = () => {
     skip: isAdmin || !user?.userId,
   });
 
+  const [changeStatus] = complaintApi.useChangeComplaintStatusMutation();
+
   const complaintsData = isAdmin ? allComplaints : userComplaints;
   const isLoading = isAdmin ? adminLoading : userLoading;
   const error = isAdmin ? adminError : userError;
@@ -48,13 +50,15 @@ export const ComplaintsList = () => {
 
   const mapStatus = (status: string): Complaint["status"] => {
     switch (status?.toLowerCase()) {
+      case "inprogress":
+        return "inProgress";
       case "resolved":
         return "resolved";
-      case "rejected":
-        return "rejected";
-      case "pending":
+      case "closed":
+        return "closed";
+      case "open":
       default:
-        return "pending";
+        return "open";
     }
   };
 
@@ -75,11 +79,13 @@ export const ComplaintsList = () => {
 
   const getStatusBadge = (status: Complaint["status"]) => {
     switch (status) {
-      case "pending":
+      case "open":
+        return "bg-gray-100 text-gray-800";
+      case "inProgress":
         return "bg-yellow-100 text-yellow-800";
       case "resolved":
         return "bg-green-100 text-green-800";
-      case "rejected":
+      case "closed":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -94,15 +100,40 @@ export const ComplaintsList = () => {
       { header: "Complaint", accessor: "complaintText" as keyof Complaint },
       {
         header: "Status",
-        accessor: (row: Complaint) => (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
-              row.status
-            )}`}
-          >
-            {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-          </span>
-        ),
+        accessor: (row: Complaint) => {
+          if (isAdmin) {
+            return (
+              <select
+                value={row.status}
+                onChange={async (e) => {
+                  const newStatus = e.target.value as Complaint["status"];
+                  try {
+                    await changeStatus({ complaintId: row.id, status: newStatus });
+                  } catch (err) {
+                    console.error("Failed to update status", err);
+                  }
+                }}
+                className="text-xs px-2 py-1 rounded border border-gray-300 bg-white"
+              >
+                {["open", "inProgress", "resolved", "closed"].map((statusOption) => (
+                  <option key={statusOption} value={statusOption}>
+                    {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                  </option>
+                ))}
+              </select>
+            );
+          }
+
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
+                row.status
+              )}`}
+            >
+              {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+            </span>
+          );
+        },
       },
       { header: "Created At", accessor: (row: Complaint) => row.createdAt },
       {
@@ -123,7 +154,7 @@ export const ComplaintsList = () => {
         ),
       },
     ],
-    [navigate, isAdmin]
+    [navigate, isAdmin, changeStatus]
   );
 
   return (
