@@ -1,16 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Calendar as BigCalendar, momentLocalizer, type View } from 'react-big-calendar';
+import { useMemo } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { format, startOfToday, isToday, type Day, nextDay } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { Calendar, Users, MessageSquare, Activity, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import { appointmentApi } from '../../feature/api/appointmentApi';
-import Swal from 'sweetalert2';
-import moment from "moment";
-
-const localizer = momentLocalizer(moment);
+import { AppointmentCalendar } from '../../components/charts/AppointmentCalendar';
 
 interface StatCardProps {
   title: string;
@@ -53,9 +49,6 @@ export const DoctorDashboard: React.FC = () => {
   const userId = user.userId;
   const { data: appointments = [] } = appointmentApi.useGetAppointmentsByDoctorIdQuery({ doctorId: userId });
 
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<View>('month');
-
   type CalendarEvent = {
     title: string;
     start: Date;
@@ -64,46 +57,27 @@ export const DoctorDashboard: React.FC = () => {
   };
 
   const calendarEvents: CalendarEvent[] = useMemo(() => {
-    const validDays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
-    type Weekday = typeof validDays[number];
-    const weekdays: Record<Weekday, number> = {
-      sunday: 0,
-      monday: 1,
-      tuesday: 2,
-      wednesday: 3,
-      thursday: 4,
-      friday: 5,
-      saturday: 6,
-    };
+  return appointments
+    .filter((apt: any) => apt.appointmentDate)
+    .map((apt: any) => {
+      const [hours, minutes] = (apt.startTime || "09:00").split(':').map(Number);
+      const start = new Date(apt.appointmentDate);
+      start.setHours(hours);
+      start.setMinutes(minutes);
+      const duration = (apt.duration ?? 30) * 60000;
 
-    return appointments
-      .map((apt: any) => {
-        const matchingAvailability = apt.doctor?.availability?.find(
-          (a: any) => a.availabilityId === apt.availabilityId
-        );
-        if (!matchingAvailability) return null;
+      return {
+        id: apt.appointmentId,
+        title: `${apt?.user?.firstName ?? "Patient"} ${apt?.user?.lastName ?? ""}`,
+        start,
+        end: new Date(start.getTime() + duration),
+        allDay: false,
+        original: apt,
+      };
 
-        const dayOfWeek = matchingAvailability.dayOfWeek?.toLowerCase() as Weekday;
-        const startTime = matchingAvailability.startTime;
+    });
+}, [appointments]);
 
-        if (!validDays.includes(dayOfWeek)) return null;
-
-        const dayIndex = weekdays[dayOfWeek];
-        const today = startOfToday();
-        const appointmentDate = nextDay(today, dayIndex as Day);
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const start = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate(), hours, minutes);
-        const duration = (apt.duration ?? 30) * 60000;
-
-        return {
-          title: `${apt.user?.firstName ?? "Unknown"} – ${apt.appointmentStatus ?? "Consultation"}`,
-          start,
-          end: new Date(start.getTime() + duration),
-          appointment: apt,
-        };
-      })
-      .filter(Boolean) as CalendarEvent[];
-  }, [appointments]);
 
   const todaysAppointments = useMemo(() => {
     return calendarEvents.filter(event => isToday(event.start)).map(event => event.appointment);
@@ -131,12 +105,9 @@ export const DoctorDashboard: React.FC = () => {
       counts[status] = (counts[status] || 0) + 1;
     });
     const colorMap: Record<string, string> = {
-      completed: '#06139e',
-      Scheduled: '#3B82F6',
+      confirmed: '#10B981',
+      pending: '#3B82F6',
       cancelled: '#EF4444',
-      confirmed: '#069e2f',
-      pending: '#F59E0B',
-      Unknown: '#9CA3AF',
     };
     return Object.entries(counts).map(([name, value]) => ({
       name,
@@ -207,67 +178,61 @@ export const DoctorDashboard: React.FC = () => {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm h-[500px]">
-              <h3 className="font-semibold mb-2 text-blue-800">Appointments Calendar</h3>
-              <BigCalendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                date={currentDate}
-                view={view}
-                onNavigate={(newDate) => setCurrentDate(newDate)}
-                onView={(newView) => setView(newView)}
-                views={['month', 'week', 'day']}
-                popup
-                style={{ height: '100%', backgroundColor: 'white', borderRadius: '0.5rem' }}
-                onSelectEvent={(event) => {
-                  Swal.fire({
-                    title: `Appointment Details`,
-                    text: `Appointment with ${event.title}`,
-                    icon: 'info',
-                    confirmButtonText: 'Close'
-                  });
-                }}
-              />
-            </div>
+            <AppointmentCalendar
+              appointments={appointments}
+              getTitle={(a) => `${a?.user?.firstName ?? 'Patient'} ${a?.user?.lastName ?? ''}`}
+            />
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="font-semibold mb-2 text-blue-800">Patient Visits Trend</h3>
-                <ResponsiveContainer width="100%" height={200}>
+
+
+            {/* === CHARTS === */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Patient Visits Trend */}
+              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-800 mb-4">Patient Visits Trend</h3>
+                <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={patientVisitsData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Line dataKey="visits" stroke="#3B82F6" strokeWidth={2} />
+                    <Line type="monotone" dataKey="visits" stroke="#3B82F6" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="font-semibold mb-2 text-blue-800">Appointment Status</h3>
-                <ResponsiveContainer width="100%" height={200}>
+
+              {/* Appointment Status */}
+              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-800 mb-4">Appointment Status</h3>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
                       data={appointmentStatusData}
                       cx="50%"
                       cy="50%"
-                      dataKey="value"
-                      innerRadius={40}
-                      outerRadius={80}
+                      innerRadius={60}
+                      outerRadius={100}
                       paddingAngle={5}
+                      dataKey="value"
                     >
-                      {appointmentStatusData.map((e, i) => (
-                        <Cell key={i} fill={e.color} />
+                      {appointmentStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
+                <div className="flex flex-wrap justify-center space-x-4 mt-4">
+                  {appointmentStatusData.map((item, index) => (
+                    <div key={index} className="flex items-center mb-2">
+                      <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: item.color }}></div>
+                      <span className="text-sm text-gray-600">{item.name}: {item.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+
           </div>
 
           {/* Sidebar */}

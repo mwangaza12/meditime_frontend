@@ -1,34 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { format } from 'date-fns';
-import {
-  Users,
-  ClipboardList,
-  DollarSign,
-  TrendingUp,
-  Activity,
-} from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-} from 'recharts';
+import {Users,ClipboardList,DollarSign,TrendingUp,Activity,} from 'lucide-react';
+import {LineChart,Line,XAxis,YAxis,CartesianGrid,Tooltip,BarChart,Bar,ResponsiveContainer,PieChart,Pie,Cell,AreaChart,Area,} from 'recharts';
 import { userApi } from '../../feature/api/userApi';
 import { appointmentApi } from '../../feature/api/appointmentApi';
 import { paymentApi } from '../../feature/api/paymentApi';
 import { Modal } from '../../components/modal/Modal';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { AppointmentCalendar } from '../../components/charts/AppointmentCalendar';
+import dayjs from 'dayjs';
+
+
 
 const appointmentStatusColors: Record<string, string> = {
   confirmed: '#10B981',
@@ -80,9 +63,11 @@ export const AdminDashboard = () => {
   const { data: userData, isLoading: usersLoading } = userApi.useGetAllUsersQuery({ page: 1, pageSize: 10 });
   const { data: appointmentData, isLoading: appointmentsLoading } = appointmentApi.useGetAllAppointmentsQuery({});
   const { data: paymentsData, isLoading: paymentsLoading } = paymentApi.useGetAllPaymentsQuery({});
+  console.log(appointmentData);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   const totalUsers = userData?.users?.length || 0;
   const totalAppointments = appointmentData?.length || 0;
@@ -160,11 +145,6 @@ export const AdminDashboard = () => {
     color: appointmentStatusColors[status] || '#9CA3AF',
   }));
 
-  const bookedDates = useMemo(() => {
-    if (!appointmentData) return [];
-    return appointmentData.map((appointment: any) => new Date(appointment.date ?? appointment.createdAt).toDateString());
-  }, [appointmentData]);
-
   const appointmentsOnSelectedDate = useMemo(() => {
     if (!selectedDate || !appointmentData) return [];
     const selectedStr = selectedDate.toDateString();
@@ -174,13 +154,22 @@ export const AdminDashboard = () => {
     );
   }, [selectedDate, appointmentData]);
 
-  const handleDateClick = (date: Date) => {
-    const str = date.toDateString();
-    if (bookedDates.includes(str)) {
-      setSelectedDate(date);
-      setIsModalOpen(true);
-    }
-  };
+  const { upcomingAppointments } = useMemo(() => {
+    if (!appointmentData) return { upcomingAppointments: [], pastAppointments: [] };
+
+    const now = dayjs();
+    const upcoming = appointmentData.filter((a: any) =>
+      dayjs(a.appointmentDate).isSameOrAfter(now, 'day')
+    );
+    const past = appointmentData.filter((a: any) =>
+      dayjs(a.appointmentDate).isBefore(now, 'day')
+    );
+
+    return { upcomingAppointments: upcoming, pastAppointments: past };
+  }, [appointmentData]);
+
+
+
 
   const recentAppointments = appointmentData?.slice(0, 4) || [];
 
@@ -296,21 +285,15 @@ export const AdminDashboard = () => {
         </div>
 
         {/* === CALENDAR === */}
-        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Appointment Calendar</h3>
-          {appointmentsLoading ? <p className="text-sm text-gray-500">Loading calendar...</p> :
-            <div className="overflow-x-auto">
-              <Calendar
-                onClickDay={handleDateClick}
-                tileClassName={({ date, view }) => {
-                  if (view === 'month' && bookedDates.includes(date.toDateString())) {
-                    return 'bg-blue-100 text-blue-800 font-semibold rounded-full';
-                  }
-                  return '';
-                }}
-              />
-            </div>}
-        </div>
+        <AppointmentCalendar
+          appointments={upcomingAppointments}
+          getTitle={(a) => `${a.user.firstName} ${a.user.lastName}`}
+          onSelectDate={(date: Date) => {
+            setSelectedDate(date);
+            setIsModalOpen(true);
+          }}
+        />
+
 
         {/* === MODAL === */}
         <Modal

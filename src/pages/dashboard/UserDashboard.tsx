@@ -1,7 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Calendar as BigCalendar, momentLocalizer, type View } from 'react-big-calendar';
+import { useMemo } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import Swal from 'sweetalert2';
 import { appointmentApi } from '../../feature/api/appointmentApi';
 import { Calendar, Bell, Heart, Pill } from "lucide-react";
 import { useSelector } from 'react-redux';
@@ -10,13 +8,13 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { prescriptionApi } from '../../feature/api/prescriptionApi';
 import { paymentApi } from '../../feature/api/paymentApi';
-import moment from 'moment';
 import { StatCard } from '../../components/cards/StatCard';
 import type { CalendarEvent } from '../../types/types';
+import "../../index.css";
+import { AppointmentCalendar } from '../../components/charts/AppointmentCalendar';
 
 dayjs.extend(isSameOrAfter);
 
-const localizer = momentLocalizer(moment);
 
 
 const notifications = [
@@ -28,8 +26,6 @@ const notifications = [
 export const UserDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user.userId;
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<View>('month');
 
   const { data } = appointmentApi.useGetAppointmentsByUserIdQuery({ userId });
   const appointments = data?.appointments ?? [];  const { data: prescriptions = [] } = prescriptionApi.useGetPrescriptionsByUserIdQuery({ userId });
@@ -140,36 +136,12 @@ const nextAppointment = useMemo(() => {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Appointments Calendar */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-semibold text-blue-800 mb-4">Appointments Calendar</h2>
-              <div style={{ height: '400px' }}>
-                <BigCalendar
-                  localizer={localizer}
-                  events={appointmentEvents}
-                  startAccessor="start"
-                  endAccessor="end"
-                  view={view}
-                  onView={setView}
-                  date={currentDate} // 👈 controlled date
-                  onNavigate={(newDate) => {
-                    console.log("Navigated to:", newDate);
-                    setCurrentDate(newDate); // 👈 update calendar view
-                  }}
-                  defaultView="month"
-                  views={['month', 'week', 'day']}
-                  popup
-                  style={{ height: '100%', backgroundColor: 'white', borderRadius: '0.5rem' }}
-                  onSelectEvent={(event) => {
-                    Swal.fire({
-                      title: `Appointment Details`,
-                      text: `Appointment with ${event.title}`,
-                      icon: 'info',
-                      confirmButtonText: 'Close'
-                    });
-                  }}
-                />
-              </div>
-            </div>
+            <AppointmentCalendar
+              appointments={upcomingAppointments}
+              getTitle={(a) => `${a.doctor.user.firstName} ${a.doctor.user.lastName}`}
+            />
+
+
           </div>
 
           {/* Notifications & Medications */}
