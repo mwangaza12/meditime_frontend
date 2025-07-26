@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { type RootState } from "../../app/store";
 import { doctorAvailabilityApi } from "../../feature/api/doctorAvailabilityApi";
 import { useEffect } from "react";
+import { doctorApi } from "../../feature/api/doctorApi";
 
 type AvailabilitySlot = {
   dayOfWeek: string;
@@ -69,14 +70,13 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
   });
 
   const [createAvailability] = doctorAvailabilityApi.useCreateDoctorAvailabilityMutation();
+  const { data: doctorResponse, isLoading: isLoadingDoctors } = doctorApi.useGetAllDoctorsQuery({ page: 1, pageSize: 100 });
 
   const watchedAvailabilities = watch("availabilities");
 
   useEffect(() => {
-    watchedAvailabilities.forEach((availability, index) => {
-      const { startTime, endTime } = availability;
-      const duration = calculateDuration(startTime, endTime);
-      setValue(`availabilities.${index}.slotDurationMinutes`, duration);
+    watchedAvailabilities.forEach((_, index) => {
+      setValue(`availabilities.${index}.slotDurationMinutes`, 60);
     });
   }, [watchedAvailabilities, setValue]);
 
@@ -87,7 +87,7 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
         dayOfWeek: day,
         startTime: "",
         endTime: "",
-        slotDurationMinutes: 0,
+        slotDurationMinutes: 60,
         amount: 0,
       });
     } else {
@@ -105,17 +105,9 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
       dayOfWeek: day,
       startTime: "",
       endTime: "",
-      slotDurationMinutes: 0,
+      slotDurationMinutes: 60,
       amount: 0,
     });
-  };
-
-  const calculateDuration = (start: string, end: string) => {
-    if (!start || !end) return 0;
-    const [startH, startM] = start.split(":").map(Number);
-    const [endH, endM] = end.split(":").map(Number);
-    const diff = (endH * 60 + endM) - (startH * 60 + startM);
-    return diff > 0 ? diff : 0;
   };
 
   const onSubmit = async (data: DoctorAvailabilityForm) => {
@@ -124,10 +116,10 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
       return;
     }
 
-    const fixedAvailabilities = data.availabilities.map((slot) => {
-      const slotDurationMinutes = calculateDuration(slot.startTime, slot.endTime);
-      return { ...slot, slotDurationMinutes };
-    });
+    const fixedAvailabilities = data.availabilities.map((slot) => ({
+      ...slot,
+      slotDurationMinutes: 60,
+    }));
 
     const loadingToast = toast.loading("Saving availability...");
     try {
@@ -137,11 +129,11 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
           dayOfWeek: slot.dayOfWeek,
           startTime: slot.startTime,
           endTime: slot.endTime,
-          slotDurationMinutes: slot.slotDurationMinutes,
+          slotDurationMinutes: 60,
           amount: slot.amount,
         };
 
-        if (!payload.startTime || !payload.endTime || payload.slotDurationMinutes <= 0) {
+        if (!payload.startTime || !payload.endTime) {
           throw new Error(`Invalid time for ${slot.dayOfWeek}`);
         }
 
@@ -170,16 +162,28 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700">Doctor ID</label>
-          <input
-            type="number"
-            className="w-full mt-1 border px-3 py-2 rounded"
-            {...register("doctorId", {
-              valueAsNumber: true,
-              required: "Doctor ID is required",
-              min: { value: 1, message: "Doctor ID must be positive" },
-            })}
-          />
+          <label className="text-sm font-medium text-gray-700">Select Doctor</label>
+
+          {isLoadingDoctors ? (
+            <p className="text-sm text-gray-500">Loading doctors...</p>
+          ) : (
+            <select
+              className="w-full mt-1 border px-3 py-2 rounded"
+              {...register("doctorId", {
+                valueAsNumber: true,
+                required: "Doctor is required",
+                min: { value: 1, message: "Please select a doctor" },
+              })}
+            >
+              <option value="">-- Select a doctor --</option>
+              {doctorResponse?.doctors?.map((doc: any) => (
+                <option key={doc.doctorId} value={doc.doctorId}>
+                  {doc.user?.firstName} {doc.user?.lastName}
+                </option>
+              ))}
+            </select>
+          )}
+
           {errors.doctorId && (
             <p className="text-sm text-red-500 mt-1">{errors.doctorId.message}</p>
           )}
@@ -208,92 +212,82 @@ export const DoctorAvailabilityModal = ({ onClose }: { onClose: () => void }) =>
           ))}
         </div>
 
-        {fields.map((field, index) => {
-          const currentAvailability = watchedAvailabilities[index];
-          const duration = currentAvailability
-            ? calculateDuration(currentAvailability.startTime, currentAvailability.endTime)
-            : 0;
-
-          return (
-            <div key={field.id} className="border rounded-lg p-3 mt-4 bg-gray-50 space-y-2">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold capitalize">{field.dayOfWeek}</p>
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Start Time</label>
-                <select
-                  {...register(`availabilities.${index}.startTime`, { required: "Required" })}
-                  className="w-full mt-1 border px-3 py-2 rounded"
-                >
-                  <option value="">Select time</option>
-                  {timeOptions.map((time) => (
-                    <option key={time} value={time}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
-                {errors.availabilities?.[index]?.startTime && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.availabilities[index].startTime?.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">End Time</label>
-                <select
-                  {...register(`availabilities.${index}.endTime`, { required: "Required" })}
-                  className="w-full mt-1 border px-3 py-2 rounded"
-                >
-                  <option value="">Select time</option>
-                  {timeOptions.map((time) => (
-                    <option key={time} value={time}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
-                {errors.availabilities?.[index]?.endTime && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.availabilities[index].endTime?.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Amount (kes)</label>
-                <input
-                  type="number"
-                  {...register(`availabilities.${index}.amount`, {
-                    required: "Amount is required",
-                    min: { value: 0, message: "Amount must be non-negative" },
-                    valueAsNumber: true,
-                  })}
-                  className="w-full mt-1 border px-3 py-2 rounded"
-                />
-                {errors.availabilities?.[index]?.amount && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.availabilities[index].amount?.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="text-sm text-gray-700">
-                Slot Duration:{" "}
-                <span className="font-semibold">
-                  {duration > 0 ? `${duration} minutes` : "Invalid time range"}
-                </span>
-              </div>
+        {fields.map((field, index) => (
+          <div key={field.id} className="border rounded-lg p-3 mt-4 bg-gray-50 space-y-2">
+            <div className="flex justify-between items-center">
+              <p className="font-semibold capitalize">{field.dayOfWeek}</p>
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
-          );
-        })}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Start Time</label>
+              <select
+                {...register(`availabilities.${index}.startTime`, { required: "Required" })}
+                className="w-full mt-1 border px-3 py-2 rounded"
+              >
+                <option value="">Select time</option>
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+              {errors.availabilities?.[index]?.startTime && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.availabilities[index].startTime?.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">End Time</label>
+              <select
+                {...register(`availabilities.${index}.endTime`, { required: "Required" })}
+                className="w-full mt-1 border px-3 py-2 rounded"
+              >
+                <option value="">Select time</option>
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+              {errors.availabilities?.[index]?.endTime && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.availabilities[index].endTime?.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Amount (kes)</label>
+              <input
+                type="number"
+                {...register(`availabilities.${index}.amount`, {
+                  required: "Amount is required",
+                  min: { value: 0, message: "Amount must be non-negative" },
+                  valueAsNumber: true,
+                })}
+                className="w-full mt-1 border px-3 py-2 rounded"
+              />
+              {errors.availabilities?.[index]?.amount && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.availabilities[index].amount?.message}
+                </p>
+              )}
+            </div>
+
+            <div className="text-sm text-gray-700">
+              Slot Duration: <span className="font-semibold">60 minutes</span>
+            </div>
+          </div>
+        ))}
 
         <button
           type="submit"

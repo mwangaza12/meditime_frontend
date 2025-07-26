@@ -1,27 +1,29 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { appointmentApi } from "../../feature/api/appointmentApi";
-import { User, Phone, Calendar } from "lucide-react";
+import { Calendar, Phone, User } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-hot-toast";
 import type { RootState } from "../../app/store";
+import { format } from "date-fns";
 
-export const AppointmentModal = ({
-  onClose,
-  doctor,
-}: {
-  onClose: () => void;
-  doctor: any;
-}) => {
+export const AppointmentModal = ({ onClose, doctor }: { onClose: () => void; doctor: any }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState("");
   const [fee, setFee] = useState<number>(0);
 
-  const [createAppointment, { isLoading }] =
-    appointmentApi.useCreateAppointmentMutation();
+  const [createAppointment, { isLoading }] = appointmentApi.useCreateAppointmentMutation();
   const user = useSelector((state: RootState) => state.auth.user);
   const userId = user?.id || user?.userId;
+
+  const { data: bookedAppointments } = appointmentApi.useGetAppointmentsForDoctorAndDateQuery(
+    {
+      doctorId: doctor.doctorId,
+      appointmentDate: selectedDate,
+    },
+    { skip: !selectedDate }
+  );
 
   if (!doctor) return null;
 
@@ -32,7 +34,6 @@ export const AppointmentModal = ({
 
   const getAvailableDates = () => {
     if (!doctor?.availability || !Array.isArray(doctor.availability)) return [];
-
     const availableDays = doctor.availability.map(
       (slot: any) => slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()
     );
@@ -44,7 +45,6 @@ export const AppointmentModal = ({
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       const dayOfWeek = getDayOfWeek(date.toISOString());
-
       if (availableDays.includes(dayOfWeek)) {
         dates.push({
           value: date.toISOString().split("T")[0],
@@ -61,61 +61,64 @@ export const AppointmentModal = ({
     return dates;
   };
 
-  const generateTimeSlots = (startTime: string, endTime: string, intervalMinutes = 30) => {
-    const slots = [];
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const [endHour, endMinute] = endTime.split(":").map(Number);
+  const generateTimeSlots = (startTime: string, endTime: string, intervalMinutes = 60): string[] => {
+    const slots: Set<string> = new Set();
+    const [startHour, startMin] = startTime.split(":" ).map(Number);
+    const [endHour, endMin] = endTime.split(":" ).map(Number);
 
-    let current = new Date(0, 0, 0, startHour, startMinute);
-    const end = new Date(0, 0, 0, endHour, endMinute);
+    let current = new Date(0, 0, 0, startHour, startMin);
+    const end = new Date(0, 0, 0, endHour, endMin);
 
     while (current < end) {
-      slots.push(
-        `${current.getHours().toString().padStart(2, "0")}:${current
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}`
-      );
+      const timeStr = `${current.getHours().toString().padStart(2, "0")}:${current
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+      slots.add(timeStr);
       current.setMinutes(current.getMinutes() + intervalMinutes);
     }
 
-    return slots;
+    return Array.from(slots).sort();
   };
 
   const getAvailableTimeSlotsForDate = () => {
-    if (!selectedDate || !doctor?.availability) return [];
+  if (!selectedDate || !Array.isArray(doctor?.availability)) return [];
 
-    const selectedDay = getDayOfWeek(selectedDate);
-    const dayAvailability = doctor.availability.filter(
-      (slot: any) =>
-        (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
-    );
+  const selectedDay = getDayOfWeek(selectedDate);
+  const dayAvailability = doctor.availability.filter(
+    (slot: any) => (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
+  );
 
-    let allTimeSlots: string[] = [];
+  let allTimeSlots: string[] = [];
 
-    dayAvailability.forEach((slot: any) => {
-      const startTime = slot.startTime || slot.start;
-      const endTime = slot.endTime || slot.end;
-      if (startTime && endTime) {
-        const timeSlots = generateTimeSlots(startTime, endTime);
-        allTimeSlots = [...allTimeSlots, ...timeSlots];
-      }
-    });
+  dayAvailability.forEach((slot: any) => {
+    const startTime = slot.startTime || slot.start;
+    const endTime = slot.endTime || slot.end;
+    const interval = 60;
 
-    return [...new Set(allTimeSlots)].sort();
-  };
-
-  const updateFee = (date: string, _time: string) => {
-    const selectedDay = getDayOfWeek(date);
-    const matchedSlot = doctor?.availability?.find((slot: any) =>
-      (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
-    );
-
-    if (matchedSlot?.amount) {
-      setFee(Number(matchedSlot.amount));
-    } else {
-      setFee(0);
+    if (startTime && endTime) {
+      const timeSlots = generateTimeSlots(startTime, endTime, interval);
+      allTimeSlots = [...allTimeSlots, ...timeSlots];
     }
+  });
+
+  const uniqueSortedSlots = [...new Set(allTimeSlots)].sort();
+
+  // ✅ Corrected this line to slice startTime to match slot format
+  const bookedSlots = (bookedAppointments || []).map((a: any) =>
+    a.startTime?.slice(0, 5)
+  );
+
+  return uniqueSortedSlots.filter((slot) => !bookedSlots.includes(slot));
+};
+
+
+  const updateFee = (date: string) => {
+    const selectedDay = getDayOfWeek(date);
+    const matchedSlot = doctor?.availability?.find(
+      (slot: any) => (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay
+    );
+    setFee(Number(matchedSlot?.amount) || 0);
   };
 
   const handleConfirm = async () => {
@@ -130,18 +133,17 @@ export const AppointmentModal = ({
     }
 
     const selectedDay = getDayOfWeek(selectedDate);
-
     const matchedSlot = doctor.availability.find((slot: any) => {
-      const dayMatch =
-        (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay;
+      const dayMatch = (slot.dayOfWeek?.toLowerCase() || slot.day?.toLowerCase()) === selectedDay;
+      if (!dayMatch) return false;
+
       const startTime = slot.startTime || slot.start;
       const endTime = slot.endTime || slot.end;
+      if (!startTime || !endTime) return false;
 
-      if (!dayMatch || !startTime || !endTime) return false;
-
-      const [startHour, startMin] = startTime.split(":").map(Number);
-      const [endHour, endMin] = endTime.split(":").map(Number);
-      const [selHour, selMin] = selectedTime.split(":").map(Number);
+      const [startHour, startMin] = startTime.split(":" ).map(Number);
+      const [endHour, endMin] = endTime.split(":" ).map(Number);
+      const [selHour, selMin] = selectedTime.split(":" ).map(Number);
 
       const start = new Date(0, 0, 0, startHour, startMin);
       const end = new Date(0, 0, 0, endHour, endMin);
@@ -155,12 +157,24 @@ export const AppointmentModal = ({
       return;
     }
 
+    const intervalMinutes = 60;
+    const [selHour, selMin] = selectedTime.split(":" ).map(Number);
+    const start = new Date(0, 0, 0, selHour, selMin);
+    const end = new Date(start);
+    end.setMinutes(start.getMinutes() + intervalMinutes);
+
+    const endTimeStr = `${end.getHours().toString().padStart(2, "0")}:${end
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+
     const appointmentData = {
       userId,
       doctorId: doctor?.doctorId,
       availabilityId: matchedSlot.availabilityId,
       appointmentDate: selectedDate,
-      timeSlot: selectedTime,
+      startTime: selectedTime,
+      endTime: endTimeStr,
       totalAmount: fee.toString(),
     };
 
@@ -180,7 +194,7 @@ export const AppointmentModal = ({
 
   return (
     <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-      {/* Doctor Info */}
+      {/* Doctor Details Card */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
         <div className="flex items-start justify-between">
           <div>
@@ -214,7 +228,6 @@ export const AppointmentModal = ({
         </div>
       </div>
 
-      {/* Appointment Form */}
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -222,11 +235,17 @@ export const AppointmentModal = ({
           </label>
           <DatePicker
             selected={selectedDate ? new Date(selectedDate) : null}
-            onChange={(date) => {
-              const iso = date?.toISOString().split("T")[0] || "";
+            onChange={(date: Date | null) => {
+              if (!date) {
+                setSelectedDate("");
+                setSelectedTime("");
+                return;
+              }
+
+              const iso = format(date, "yyyy-MM-dd");
               setSelectedDate(iso);
               setSelectedTime("");
-              if (iso) updateFee(iso, "");
+              updateFee(iso);
             }}
             includeDates={availableDateObjects}
             placeholderText="Choose an available date"
@@ -235,46 +254,40 @@ export const AppointmentModal = ({
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Select Time Slot
-          </label>
-          <DatePicker
-            selected={
-              selectedTime && selectedDate
-                ? new Date(`${selectedDate}T${selectedTime}`)
-                : null
-            }
-            onChange={(date) => {
-              const timeStr = date?.toTimeString().slice(0, 5) || "";
-              setSelectedTime(timeStr);
-              if (selectedDate && timeStr) updateFee(selectedDate, timeStr);
-            }}
-            showTimeSelect
-            showTimeSelectOnly
-            timeIntervals={30}
-            timeCaption="Time"
-            dateFormat="h:mm aa"
-            includeTimes={availableTimeSlots.map((time) => {
-              const [h, m] = time.split(":").map(Number);
-              const d = new Date(selectedDate);
-              d.setHours(h, m, 0, 0);
-              return d;
-            })}
-            disabled={!selectedDate || availableTimeSlots.length === 0}
-            placeholderText={!selectedDate ? "Select a date first" : "Choose a time slot"}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3"
-          />
-        </div>
+        {selectedDate && availableTimeSlots.length === 0 && (
+          <div className="text-red-500 font-semibold">
+            Doctor is fully booked for this day.
+          </div>
+        )}
+
+        {availableTimeSlots.length > 0 && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Select Time Slot
+            </label>
+            <select
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+              className="w-1/2 border border-gray-300 rounded-lg px-4 py-3"
+            >
+              <option value="">Choose a time slot</option>
+              {availableTimeSlots.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {selectedDate && selectedTime && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h4 className="font-semibold text-green-800 mb-2">Appointment Summary</h4>
             <div className="text-sm text-green-700 space-y-1">
               <p><strong>Doctor:</strong> Dr. {doctor?.user?.firstName} {doctor?.user?.lastName}</p>
-              <p><strong>Date:</strong> {availableDates.find(d => d.value === selectedDate)?.label}</p>
+              <p><strong>Date:</strong> {availableDates.find((d) => d.value === selectedDate)?.label}</p>
               <p><strong>Time:</strong> {selectedTime}</p>
-              <p><strong>Fee:</strong> Ksh.{fee}</p>
+              <p><strong>Fee:</strong> Ksh. {fee}</p>
             </div>
           </div>
         )}

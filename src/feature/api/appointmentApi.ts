@@ -4,15 +4,15 @@ import type { RootState } from "../../app/store";
 export const appointmentApi = createApi({
     reducerPath: "appointmentApi",
     baseQuery: fetchBaseQuery({
-            baseUrl:  import.meta.env.VITE_BACKEND_URL,
-            prepareHeaders: (headers, { getState }) => {
-            const token = (getState() as RootState).auth.token;
+        baseUrl:  import.meta.env.VITE_BACKEND_URL,
+        prepareHeaders: (headers, { getState }) => {
+        const token = (getState() as RootState).auth.token;
             if (token) {
                 headers.set('Authorization', `Bearer ${token}`);
             }
             headers.set('Content-Type', 'application/json');
             return headers;
-            },
+        },
     }),
     tagTypes: ['Appointments', 'Patients'],
     endpoints: (builder) => ({
@@ -73,7 +73,13 @@ export const appointmentApi = createApi({
                 params: { doctorId },
             }),
             providesTags: ['Patients']
-        })
+        }),
+
+        getAppointmentsForDoctorAndDate: builder.query({
+            query: ({ doctorId, appointmentDate }) =>
+                `/appointments?doctorId=${doctorId}&date=${appointmentDate}`,
+            providesTags: ['Appointments'],
+        }),
 
     })
 

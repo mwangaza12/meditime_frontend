@@ -4,7 +4,7 @@ import { skipToken } from "@reduxjs/toolkit/query/react";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { CalendarCheck, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { CalendarCheck, Clock, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Table, type Column } from "../../components/table/Table";
 import { Spinner } from "../../components/loader/Spinner";
 import { TextInput } from "../../components/form/TextInput";
@@ -40,8 +40,12 @@ export const AppointmentList = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   const csvLinkRef = useRef<any>(null);
-
 
   const {
     data: allData = [],
@@ -108,7 +112,6 @@ export const AppointmentList = () => {
     [data]
   );
 
-
   const filteredAppointments = mappedAppointments.filter((appt) => {
     const matchesSearch =
       appt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -122,6 +125,27 @@ export const AppointmentList = () => {
 
     return matchesSearch && matchesStatus && matchesStart && matchesEnd;
   });
+
+  // Pagination calculations
+  const totalItems = filteredAppointments.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, startDate, endDate, itemsPerPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
 
   const getStatusBadge = (status: Appointment["status"]) => {
     switch (status) {
@@ -179,8 +203,6 @@ export const AppointmentList = () => {
       }
     });
   };
-
-
 
   const handleOpenComplaint = (appointmentId: string) => {
     setSelectedAppointmentId(appointmentId);
@@ -282,6 +304,42 @@ export const AppointmentList = () => {
   const confirmedCount = filteredAppointments.filter((a) => a.status === "confirmed").length;
   const cancelledCount = filteredAppointments.filter((a) => a.status === "cancelled").length;
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="p-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -310,9 +368,7 @@ export const AppointmentList = () => {
         </div>
       </div>
 
-
-
-      <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
+      <div className="flex flex-wrap justify-between mb-4 gap-4">
         <TextInput
           label="Search by name"
           type="text"
@@ -357,19 +413,36 @@ export const AppointmentList = () => {
           onChange={(e) => setEndDate(e.target.value)}
         />
 
+        <div>
+          <label className="text-sm font-medium text-gray-700">Items per page</label>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+            className="block mt-1 px-3 py-2 border rounded-md"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+
         <button
           onClick={() => {
             setSearchQuery("");
             setStatusFilter("all");
             setStartDate("");
             setEndDate("");
+            setCurrentPage(1);
           }}
           className="bg-gray-100 hover:bg-gray-200 text-sm px-3 py-2 rounded"
         >
           Reset Filters
         </button>
 
-        <button
+        <div className="space-x-2">
+          <button
           onClick={handleExportPDF}
           className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded"
         >
@@ -392,7 +465,8 @@ export const AppointmentList = () => {
             target="_blank"
           />
         </>
-
+        </div>
+        
       </div>
 
       {isLoading ? (
@@ -402,12 +476,62 @@ export const AppointmentList = () => {
       ) : filteredAppointments.length === 0 ? (
         <p className="text-gray-500 italic">No appointments found.</p>
       ) : (
-        <Table
-          columns={columns}
-          data={filteredAppointments}
-          selectable
-          emptyText="No appointments found."
-        />
+        <>
+          <Table
+            columns={columns}
+            data={paginatedAppointments}
+            selectable
+            emptyText="No appointments found."
+          />
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-700">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} appointments
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </button>
+
+                <div className="flex space-x-1">
+                  {getPageNumbers().map((page, index) => (
+                    <button
+                      key={index}
+                      onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
+                      disabled={page === '...'}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        page === currentPage
+                          ? 'bg-blue-600 text-white'
+                          : page === '...'
+                          ? 'text-gray-400 cursor-default'
+                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {showModal && selectedAppointmentId && (
