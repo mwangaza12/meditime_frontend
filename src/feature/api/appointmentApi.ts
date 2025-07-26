@@ -14,7 +14,7 @@ export const appointmentApi = createApi({
             return headers;
             },
     }),
-    tagTypes: ['Appointments'],
+    tagTypes: ['Appointments', 'Patients'],
     endpoints: (builder) => ({
         getAllAppointments: builder.query({
             query: ({ page, pageSize }) => ({
@@ -67,6 +67,13 @@ export const appointmentApi = createApi({
             invalidatesTags: ["Appointments"],
         }),
 
+        doctorPatients: builder.query({
+            query: ({ doctorId }) => ({
+                url: 'patients/doctor',
+                params: { doctorId },
+            }),
+            providesTags: ['Patients']
+        })
 
     })
 

@@ -26,6 +26,7 @@ import { AllDoctors } from "../pages/doctors/AllDoctors";
 import { PatientAppointment } from "../pages/appointments/PatientAppointment";
 import ComplaintChat from "../pages/complaints/ComplaintChat";
 import { MedicalHistory } from "../pages/medicalHistory/MedicalHistory";
+import { PatientList } from "../pages/patients/PatientList";
 
 export const router = createBrowserRouter([
   {
@@ -214,6 +215,10 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
+      },
+      {
+        path: "patients",
+        element: <PatientList />
       }
     ],
   },

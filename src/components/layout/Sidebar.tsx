@@ -78,6 +78,13 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       icon: MessageSquare,
       color: "from-indigo-500 to-indigo-600",
     },
+    patients: {
+      name: "Patients",
+      path: "/doctor-dashboard/patients",
+      icon: Users,
+      color: "from-green-500 to-green-600"
+    }
+
   };
 
   const adminMenuItems = [
@@ -99,13 +106,14 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
     baseLinks.payment,
     baseLinks.complaint,
     baseLinks.browseDoctors,
-    baseLinks.medicalHistory
+    baseLinks.medicalHistory,
   ];
 
   const doctorMenuItems = [
     baseLinks.dashboard,
     baseLinks.appointment,
     baseLinks.prescription,
+    baseLinks.patients,
   ];
 
   const menuItems =
