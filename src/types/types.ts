@@ -47,3 +47,13 @@ export interface Appointment {
   totalAmount?: number;
   isPaid?: boolean;
 }
+
+export interface Complaint {
+  id: string;
+  userName: string;
+  appointmentDate: string;
+  subject: string;
+  complaintText: string;
+  status: "open" | "inProgress" | "resolved" | "closed";
+  createdAt: string;
+}

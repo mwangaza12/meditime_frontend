@@ -1,34 +1,28 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Table } from "../../components/table/Table";
-import { Spinner } from "../../components/loader/Spinner";
 import { complaintApi } from "../../feature/api/complaintApi";
+import { Spinner } from "../../components/loader/Spinner";
+import { Table } from "../../components/table/Table";
 import { type RootState } from "../../app/store";
+import {AlertCircle,CheckCircle,Clock,XCircle,Filter,} from "lucide-react";
+import type { Complaint } from "../../types/types";
 
-interface Complaint {
-  id: string;
-  userName: string;
-  appointmentDate: string;
-  subject: string;
-  complaintText: string;
-  status: "open" | "inProgress" | "resolved" | "closed";
-  createdAt: string;
-}
 
 export const ComplaintsList = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<Complaint["status"] | "all">("all");
+
   const {
     data: allComplaints = [],
     error: adminError,
     isLoading: adminLoading,
-  } = complaintApi.useGetAllComplaintsQuery(
-    { page: 1, pageSize: 10 },
-    { skip: !isAdmin }
-  );
+  } = complaintApi.useGetAllComplaintsQuery({ page, pageSize }, { skip: !isAdmin });
 
   const {
     data: userComplaints = [],
@@ -76,6 +70,26 @@ export const ComplaintsList = () => {
       })),
     [complaintsData]
   );
+
+  const filteredComplaints = useMemo(() => {
+    if (statusFilter === "all") return mappedComplaints;
+    return mappedComplaints.filter((c) => c.status === statusFilter);
+  }, [mappedComplaints, statusFilter]);
+
+  const statusStats = useMemo(() => {
+    return mappedComplaints.reduce(
+      (acc, complaint) => {
+        acc[complaint.status]++;
+        return acc;
+      },
+      {
+        open: 0,
+        inProgress: 0,
+        resolved: 0,
+        closed: 0,
+      } as Record<Complaint["status"], number>
+    );
+  }, [mappedComplaints]);
 
   const getStatusBadge = (status: Complaint["status"]) => {
     switch (status) {
@@ -159,17 +173,72 @@ export const ComplaintsList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <p className="text-gray-600">
-              {isAdmin
-                ? "Manage all patient complaints"
-                : "View and submit your complaints"}
-            </p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <p className="text-gray-600">
+          {isAdmin
+            ? "Manage all patient complaints"
+            : "View and submit your complaints"}
+        </p>
+
+        {/* Status Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <div
+            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "all" ? "bg-blue-100" : "bg-white"}`}
+            onClick={() => setStatusFilter("all")}
+          >
+            <div>
+              <p className="text-sm text-slate-600">All Complaints</p>
+              <p className="text-2xl font-bold text-blue-800">{mappedComplaints.length}</p>
+            </div>
+            <Filter className="w-6 h-6 text-blue-800" />
+          </div>
+
+          <div
+            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "open" ? "bg-gray-100" : "bg-white"}`}
+            onClick={() => setStatusFilter("open")}
+          >
+            <div>
+              <p className="text-sm text-slate-600">Open</p>
+              <p className="text-2xl font-bold text-gray-800">{statusStats.open}</p>
+            </div>
+            <AlertCircle className="w-6 h-6 text-gray-800" />
+          </div>
+
+          <div
+            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "inProgress" ? "bg-yellow-100" : "bg-white"}`}
+            onClick={() => setStatusFilter("inProgress")}
+          >
+            <div>
+              <p className="text-sm text-slate-600">In Progress</p>
+              <p className="text-2xl font-bold text-yellow-600">{statusStats.inProgress}</p>
+            </div>
+            <Clock className="w-6 h-6 text-yellow-600" />
+          </div>
+
+          <div
+            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "resolved" ? "bg-green-100" : "bg-white"}`}
+            onClick={() => setStatusFilter("resolved")}
+          >
+            <div>
+              <p className="text-sm text-slate-600">Resolved</p>
+              <p className="text-2xl font-bold text-green-600">{statusStats.resolved}</p>
+            </div>
+            <CheckCircle className="w-6 h-6 text-green-600" />
+          </div>
+
+          <div
+            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "closed" ? "bg-red-100" : "bg-white"}`}
+            onClick={() => setStatusFilter("closed")}
+          >
+            <div>
+              <p className="text-sm text-slate-600">Closed</p>
+              <p className="text-2xl font-bold text-red-600">{statusStats.closed}</p>
+            </div>
+            <XCircle className="w-6 h-6 text-red-600" />
           </div>
         </div>
 
+        {/* Table */}
         {isLoading ? (
           <Spinner />
         ) : isEmptyError || mappedComplaints.length === 0 ? (
@@ -181,14 +250,36 @@ export const ComplaintsList = () => {
         ) : error ? (
           <p className="text-red-500">Failed to load complaints.</p>
         ) : (
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-            <Table
-              columns={columns}
-              data={mappedComplaints}
-              selectable={isAdmin}
-              emptyText="No complaints found."
-            />
-          </div>
+          <>
+            <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+              <Table
+                columns={columns}
+                data={filteredComplaints}
+                selectable={isAdmin}
+                emptyText="No complaints found."
+              />
+            </div>
+
+            {/* Pagination (for admin only) */}
+            {isAdmin && (
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border rounded disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-slate-600">Page {page}</span>
+                <button
+                  onClick={() => setPage((prev) => prev + 1)}
+                  className="px-4 py-2 border rounded"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -72,6 +72,12 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       icon: Search,
       color: "from-purple-500 to-purple-600",
     },
+    medicalHistory: {
+      name: "Medical History",
+      path: "/user-dashboard/medical-history",
+      icon: MessageSquare,
+      color: "from-indigo-500 to-indigo-600",
+    },
   };
 
   const adminMenuItems = [
@@ -93,6 +99,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
     baseLinks.payment,
     baseLinks.complaint,
     baseLinks.browseDoctors,
+    baseLinks.medicalHistory
   ];
 
   const doctorMenuItems = [

@@ -25,6 +25,7 @@ import { ResetPassword } from "../pages/auth/ResetPassword";
 import { AllDoctors } from "../pages/doctors/AllDoctors";
 import { PatientAppointment } from "../pages/appointments/PatientAppointment";
 import ComplaintChat from "../pages/complaints/ComplaintChat";
+import { MedicalHistory } from "../pages/medicalHistory/MedicalHistory";
 
 export const router = createBrowserRouter([
   {
@@ -177,6 +178,10 @@ export const router = createBrowserRouter([
         path: "complaints/:complaintId",
         element: <ComplaintChat />,
       },
+      {
+        path:"medical-history",
+        element: <MedicalHistory />
+      }
     ],
   },
 
