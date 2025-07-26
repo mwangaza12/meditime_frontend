@@ -46,6 +46,7 @@ export interface Appointment {
   durationMinutes: number;
   totalAmount?: number;
   isPaid?: boolean;
+  startDateTime: string | null,
 }
 
 export interface Complaint {

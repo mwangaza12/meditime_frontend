@@ -42,35 +42,35 @@ export const PatientAppointment = () => {
   };
 
   const mappedAppointments: Appointment[] = useMemo(
-    () =>
-      (userData.appointments || []).map((item: any): Appointment => {
-        const dateStr = item.appointmentDate;
-        const timeStr = item?.doctor?.availability?.[0]?.startTime;
-        let startTime = "";
+  () =>
+    (userData.appointments || []).map((item: any): Appointment => {
+      const appointmentDate = item.appointmentDate;
+      const startTime = item.startTime;
 
-        if (dateStr && timeStr) {
-          const [hours, minutes] = timeStr.split(":").map(Number);
-          const date = new Date(dateStr);
-          date.setHours(hours, minutes, 0, 0);
-          startTime = date.toISOString();
-        }
+      // Combine date and time
+      const startDateTime =
+        appointmentDate && startTime
+          ? `${appointmentDate}T${startTime}`
+          : null;
 
-        return {
-          id: String(item.appointmentId),
-          patientName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim(),
-          doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
-          specialization: item?.doctor?.specialization?.name || "",
-          doctor: item?.doctor?.user,
-          date: item.appointmentDate,
-          startTime,
-          status: mapStatus(item.appointmentStatus),
-          durationMinutes: item?.doctor?.availability?.[0]?.slotDurationMinutes || 30,
-          totalAmount: Number(item.totalAmount),
-          isPaid: item.payments?.[0]?.paymentStatus === "completed",
-        };
-      }),
-    [userData]
-  );
+      return {
+        id: String(item.appointmentId),
+        patientName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim(),
+        doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
+        specialization: item?.doctor?.specialization?.name || "",
+        doctor: item?.doctor?.user,
+        date: appointmentDate,
+        startTime,
+        startDateTime, // ✅ use this in UI
+        status: mapStatus(item.appointmentStatus),
+        durationMinutes: item?.doctor?.availability?.[0]?.slotDurationMinutes || 30,
+        totalAmount: Number(item.totalAmount),
+        isPaid: item.payments?.[0]?.paymentStatus === "completed",
+      };
+    }),
+  [userData]
+);
+
 
   const appointmentStats = useMemo(() => {
     const total = mappedAppointments.length;
@@ -174,9 +174,12 @@ export const PatientAppointment = () => {
         <div>
           <span className="text-gray-500 block">Time</span>
           <span className="font-medium text-gray-900">
-            {appointment.startTime
-              ? new Date(appointment.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : "N/A"}
+            {appointment.startDateTime
+            ? new Date(appointment.startDateTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "N/A"}
           </span>
         </div>
       </div>
@@ -380,8 +383,8 @@ export const PatientAppointment = () => {
                             {new Date(appointment.date).toLocaleDateString()}
                           </td>
                           <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {appointment.startTime
-                              ? new Date(appointment.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                            {appointment.startDateTime // ✅ Updated here!
+                              ? new Date(appointment.startDateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                               : "N/A"}
                           </td>
                           <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 whitespace-nowrap hidden lg:table-cell">
