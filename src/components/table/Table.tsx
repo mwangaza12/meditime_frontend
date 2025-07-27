@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 
 export interface Column<T> {
@@ -15,16 +15,38 @@ interface DataTableProps<T> {
   error?: boolean;
   emptyText?: string;
   selectable?: boolean;
+  onSelectionChange?: (selectedIds: string[]) => void; // ✅ added prop
 }
 
-export function Table<T>({columns,data,loading = false,error = false,emptyText = "No records found.",selectable = false,}: DataTableProps<T>) {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+export function Table<T extends { id: string }>({
+  columns,
+  data,
+  loading = false,
+  error = false,
+  emptyText = "No records found.",
+  selectable = false,
+  onSelectionChange,
+}: DataTableProps<T>) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const toggleRow = (index: number) => {
-    setSelectedRows((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(id)) {
+        updated.delete(id);
+      } else {
+        updated.add(id);
+      }
+      return updated;
+    });
   };
+
+  // Notify parent when selected IDs change
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(Array.from(selectedIds));
+    }
+  }, [selectedIds, onSelectionChange]);
 
   if (loading) return <p className="p-4">Loading...</p>;
   if (error) return <p className="p-4 text-red-500">Failed to load data.</p>;
@@ -32,10 +54,10 @@ export function Table<T>({columns,data,loading = false,error = false,emptyText =
 
   return (
     <div className="w-full overflow-x-auto rounded-md border-slate-200">
-    <table className="min-w-full table-auto text-sm text-left border rounded-md divide-y divide-slate-200">
+      <table className="min-w-full table-auto text-sm text-left border rounded-md divide-y divide-slate-200">
         <thead className="bg-blue-100">
           <tr>
-            {selectable && <th className="px-4 py-3"></th>}
+            {selectable && <th className="px-4 py-3 w-10"></th>}
             {columns.map((col, idx) => (
               <th
                 key={idx}
@@ -51,19 +73,19 @@ export function Table<T>({columns,data,loading = false,error = false,emptyText =
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {data.map((row, rowIndex) => (
+          {data.map((row) => (
             <tr
-              key={rowIndex}
+              key={row.id}
               className={clsx("hover:bg-slate-50 transition-colors", {
-                "bg-slate-100": selectedRows.includes(rowIndex),
+                "bg-slate-100": selectedIds.has(row.id),
               })}
             >
               {selectable && (
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="px-4 py-3">
                   <input
                     type="checkbox"
-                    checked={selectedRows.includes(rowIndex)}
-                    onChange={() => toggleRow(rowIndex)}
+                    checked={selectedIds.has(row.id)}
+                    onChange={() => toggleRow(row.id)}
                     className="checkbox checkbox-sm"
                   />
                 </td>

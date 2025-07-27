@@ -81,6 +81,17 @@ export const appointmentApi = createApi({
             providesTags: ['Appointments'],
         }),
 
+        // in appointmentApi.ts
+        deleteManyAppointments: builder.mutation({
+            query: ({ ids }) => ({
+                url: "/appointments/bulk-delete",
+                method: "POST", // or DELETE if your backend supports body in DELETE
+                body: { ids },
+            }),
+            invalidatesTags: ["Appointments"],
+        }),
+
+
     })
 
 })

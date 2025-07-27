@@ -38,7 +38,7 @@ export const AppointmentList = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin";
   const isDoctor = user?.role === "doctor";
-
+  const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,6 +78,8 @@ export const AppointmentList = () => {
     user?.userId ? { userId: user.userId } : skipToken,
     { skip: isAdmin || isDoctor }
   );
+  const [deleteManyAppointments] = appointmentApi.useDeleteManyAppointmentsMutation();
+
 
   const [changeStatus] = appointmentApi.useChangeAppointmentStatusMutation();
 
@@ -464,8 +466,6 @@ export const AppointmentList = () => {
         >
           Export PDF
         </button>
-
-        <>
           <button
             onClick={handleExportCSV}
             className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded"
@@ -480,17 +480,43 @@ export const AppointmentList = () => {
             className="hidden"
             target="_blank"
           />
-        </>
         </div>
-        
+        <button
+          disabled={selectedAppointments.length === 0}
+          onClick={async () => {
+            const result = await Swal.fire({
+              title: "Are you sure?",
+              text: `Delete ${selectedAppointments.length} appointments? This cannot be undone.`,
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Yes, delete",
+            });
+
+            if (result.isConfirmed) {
+              try {
+                const res = await deleteManyAppointments({ ids: selectedAppointments }).unwrap();
+                toast.success(res.message || "Deleted successfully");
+                setSelectedAppointments([]);
+              } catch (err: any) {
+                const errorMessage =
+                  err?.data?.message || err?.error || "Failed to delete appointments";
+                toast.error(errorMessage);
+              }
+            }
+          }}
+          className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Delete Selected
+        </button>
+
       </div>
 
       {isLoading ? (
         <Spinner />
       ) : error ? (
-        <p className="text-red-500">Failed to load appointments.</p>
-      ) : filteredAppointments.length === 0 ? (
         <p className="text-gray-500 italic">No appointments found.</p>
+      ) : filteredAppointments.length === 0 ? (
+        <p className="text-red-500">Failed to load appointments.</p>
       ) : (
         <>
           <Table
@@ -498,7 +524,9 @@ export const AppointmentList = () => {
             data={paginatedAppointments}
             selectable
             emptyText="No appointments found."
+            onSelectionChange={(ids: string[]) => setSelectedAppointments(ids)}
           />
+
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
