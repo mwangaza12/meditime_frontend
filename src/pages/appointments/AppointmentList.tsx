@@ -17,16 +17,21 @@ import toast from "react-hot-toast";
 import { Search, Calendar } from "lucide-react";
 import Swal from "sweetalert2";
 
-interface Appointment {
+export interface Appointment {
   id: string;
   patientName: string;
   doctorName: string;
+  doctor: {
+    profileImageUrl: string;
+  }
+  specialization?: string;
   date: string;
-  time: string;
+  startTime: string;
   status: "pending" | "cancelled" | "confirmed";
   durationMinutes: number;
   totalAmount?: number;
   isPaid?: boolean;
+  startDateTime: string | null,
 }
 
 export const AppointmentList = () => {
@@ -97,12 +102,23 @@ export const AppointmentList = () => {
     () =>
       data.map((item: any): Appointment => {
         const availability = item.doctor?.availability?.[0] || {};
+        const appointmentDate = item.appointmentDate;
+
+        const startTime = item.startTime;
+
+        // Combine date and time
+        const startDateTime =
+          appointmentDate && startTime
+            ? `${appointmentDate}T${startTime}`
+            : null;
         return {
           id: String(item.appointmentId),
           patientName: `${item.user?.firstName || ""} ${item.user?.lastName || ""}`.trim(),
           doctorName: `${item.doctor?.user?.firstName || ""} ${item.doctor?.user?.lastName || ""}`.trim(),
           date: item.appointmentDate,
-          time: availability.startTime || item.timeSlot || "N/A",
+          doctor: item?.doctor?.user,
+          startTime,
+          startDateTime,
           status: mapStatus(item.appointmentStatus),
           durationMinutes: availability.slotDurationMinutes || item.durationMinutes || 30,
           totalAmount: Number(item.totalAmount),
@@ -177,7 +193,7 @@ export const AppointmentList = () => {
             a.patientName,
             a.doctorName,
             a.date,
-            a.time,
+            a.startTime,
             a.status,
           ]),
         });
@@ -228,7 +244,7 @@ export const AppointmentList = () => {
         header: "Date",
         accessor: (row) => new Date(row.date).toLocaleDateString(),
       },
-      { header: "Time", accessor: "time" },
+      { header: "Time", accessor: "startTime" },
       { header: "Duration", accessor: "durationMinutes" },
       {
         header: "Status",
