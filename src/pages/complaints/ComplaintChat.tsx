@@ -115,7 +115,7 @@ export default function ComplaintChat() {
               <div key={msg.replyId || Math.random()} className={`flex ${isPatient ? "justify-end" : "justify-start"}`}>
                 <div className="flex items-end gap-3 max-w-[80%] md:max-w-[60%]">
                   {!isPatient && (
-                    <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold">
+                    <div className="w-9 h-9 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold">
                       ST
                     </div>
                   )}
