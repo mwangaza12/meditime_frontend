@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 import { CSVLink } from "react-csv";
@@ -80,7 +80,6 @@ export const AppointmentList = () => {
   );
   const [deleteManyAppointments] = appointmentApi.useDeleteManyAppointmentsMutation();
 
-
   const [changeStatus] = appointmentApi.useChangeAppointmentStatusMutation();
 
   const data = isAdmin ? allData : isDoctor ? doctorData : userData;
@@ -151,10 +150,26 @@ export const AppointmentList = () => {
   const endIndex = startIndex + itemsPerPage;
   const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
 
-  // Reset to first page when filters change
-  useMemo(() => {
+  // Filter change handlers that reset pagination
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, startDate, endDate, itemsPerPage]);
+  };
+
+  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartDate(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value);
+    setCurrentPage(1);
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -164,6 +179,19 @@ export const AppointmentList = () => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   };
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
+  };
+
+  // Memoize the selection change handler to prevent unnecessary re-renders
+  const handleSelectionChange = useCallback((ids: string[]) => {
+    setSelectedAppointments(ids);
+  }, []);
 
   const getStatusBadge = (status: Appointment["status"]) => {
     switch (status) {
@@ -235,6 +263,28 @@ export const AppointmentList = () => {
       const errorMessage =
         err?.data?.message || err?.error || "Failed to update appointment status";
       toast.error(errorMessage);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `Delete ${selectedAppointments.length} appointments? This cannot be undone.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await deleteManyAppointments({ ids: selectedAppointments }).unwrap();
+        toast.success(res.message || "Deleted successfully");
+        setSelectedAppointments([]);
+      } catch (err: any) {
+        const errorMessage =
+          err?.data?.message || err?.error || "Failed to delete appointments";
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -394,14 +444,14 @@ export const AppointmentList = () => {
           name="search"
           icon={<Search size={16} />}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearchChange}
         />
 
         <div>
           <label className="text-sm font-medium text-gray-700">Status</label>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
             className="block mt-1 px-3 py-2 border rounded-md"
           >
             <option value="all">All</option>
@@ -418,7 +468,7 @@ export const AppointmentList = () => {
           name="start"
           icon={<Calendar size={16} />}
           value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          onChange={handleStartDateChange}
         />
 
         <TextInput
@@ -428,7 +478,7 @@ export const AppointmentList = () => {
           name="end"
           icon={<Calendar size={16} />}
           value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
+          onChange={handleEndDateChange}
         />
 
         <div>
@@ -447,13 +497,7 @@ export const AppointmentList = () => {
         </div>
 
         <button
-          onClick={() => {
-            setSearchQuery("");
-            setStatusFilter("all");
-            setStartDate("");
-            setEndDate("");
-            setCurrentPage(1);
-          }}
+          onClick={handleResetFilters}
           className="bg-gray-100 hover:bg-gray-200 text-sm px-3 py-2 rounded"
         >
           Reset Filters
@@ -461,11 +505,11 @@ export const AppointmentList = () => {
 
         <div className="space-x-2">
           <button
-          onClick={handleExportPDF}
-          className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded"
-        >
-          Export PDF
-        </button>
+            onClick={handleExportPDF}
+            className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded"
+          >
+            Export PDF
+          </button>
           <button
             onClick={handleExportCSV}
             className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded"
@@ -481,42 +525,22 @@ export const AppointmentList = () => {
             target="_blank"
           />
         </div>
+        
         <button
           disabled={selectedAppointments.length === 0}
-          onClick={async () => {
-            const result = await Swal.fire({
-              title: "Are you sure?",
-              text: `Delete ${selectedAppointments.length} appointments? This cannot be undone.`,
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonText: "Yes, delete",
-            });
-
-            if (result.isConfirmed) {
-              try {
-                const res = await deleteManyAppointments({ ids: selectedAppointments }).unwrap();
-                toast.success(res.message || "Deleted successfully");
-                setSelectedAppointments([]);
-              } catch (err: any) {
-                const errorMessage =
-                  err?.data?.message || err?.error || "Failed to delete appointments";
-                toast.error(errorMessage);
-              }
-            }
-          }}
+          onClick={handleDeleteSelected}
           className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Delete Selected
         </button>
-
       </div>
 
       {isLoading ? (
         <Spinner />
       ) : error ? (
-        <p className="text-gray-500 italic">No appointments found.</p>
-      ) : filteredAppointments.length === 0 ? (
         <p className="text-red-500">Failed to load appointments.</p>
+      ) : filteredAppointments.length === 0 ? (
+        <p className="text-gray-500 italic">No appointments found.</p>
       ) : (
         <>
           <Table
@@ -524,9 +548,8 @@ export const AppointmentList = () => {
             data={paginatedAppointments}
             selectable
             emptyText="No appointments found."
-            onSelectionChange={(ids: string[]) => setSelectedAppointments(ids)}
+            onSelectionChange={handleSelectionChange}
           />
-
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
