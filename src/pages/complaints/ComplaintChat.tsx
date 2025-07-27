@@ -7,7 +7,7 @@ import { type RootState } from "../../app/store";
 import { complaintApi } from "../../feature/api/complaintApi";
 import { io, Socket } from "socket.io-client";
 
-const SOCKET_SERVER_URL = "http://localhost:5000";
+const SOCKET_SERVER_URL = "https://medical-patient-appointment-system.azurewebsites.net";
 
 let socket: Socket | null = null;
 
