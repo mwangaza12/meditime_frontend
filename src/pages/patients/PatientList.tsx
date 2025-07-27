@@ -199,10 +199,14 @@ export const PatientList = () => {
         ) : (
           <Table
             columns={columns}
-            data={mappedPatients}
+            data={mappedPatients.map((p) => ({
+              ...p,
+              id: p.userId.toString(), // ✅ add 'id' field as string
+            }))}
             selectable={false}
             emptyText="No patients found."
           />
+
         )}
       </div>
     </div>

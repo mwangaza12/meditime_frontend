@@ -8,7 +8,7 @@ import { UserModal } from "./UserModal";
 
 // --- UserModal component ---
 export interface User {
-  userId: number;
+  userId: string;
   profileImageUrl: string;
   firstName: string;
   lastName: string;
@@ -340,13 +340,17 @@ export const UserList = () => {
 
             {/* Content based on view mode */}
             {viewMode === "table" ? (
-              <Table<User>
+              <Table<{ id: string } & User>
                 columns={columns}
-                data={paginatedUsers}
+                data={paginatedUsers.map((user) => ({
+                  ...user,
+                  id: user.userId.toString(), // Convert userId to string to satisfy constraint
+                }))}
                 loading={isLoading}
                 emptyText="No users found."
                 selectable
               />
+
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {paginatedUsers.map((user) => (

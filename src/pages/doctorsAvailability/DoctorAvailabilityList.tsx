@@ -11,6 +11,7 @@ import { Search } from "lucide-react";
 import { TextInput } from "../../components/form/TextInput";
 
 interface MappedAvailability {
+  id: string; 
   availabilityId: number;
   doctorName: string;
   dayOfWeek: string;
@@ -61,18 +62,20 @@ export const DoctorAvailabilityList = () => {
   const error = isAdmin ? allError : isDoctor ? doctorError : null;
 
   const mappedAvailability: MappedAvailability[] = useMemo(() => {
-    if (!Array.isArray(data)) return [];
-    return data.map((item) => ({
-      availabilityId: item.availabilityId,
-      doctorName: item.doctor?.user
-        ? `${item.doctor.user.firstName} ${item.doctor.user.lastName}`
-        : "N/A",
-      dayOfWeek: item.dayOfWeek,
-      startTime: item.startTime,
-      endTime: item.endTime,
-      slotDurationMinutes: item.slotDurationMinutes,
-    }));
-  }, [data]);
+  if (!Array.isArray(data)) return [];
+  return data.map((item) => ({
+    id: String(item.availabilityId), // <-- Add this line
+    availabilityId: item.availabilityId,
+    doctorName: item.doctor?.user
+      ? `${item.doctor.user.firstName} ${item.doctor.user.lastName}`
+      : "N/A",
+    dayOfWeek: item.dayOfWeek,
+    startTime: item.startTime,
+    endTime: item.endTime,
+    slotDurationMinutes: item.slotDurationMinutes,
+  }));
+}, [data]);
+
 
   const filteredData = useMemo(() => {
     return mappedAvailability.filter((item) => {

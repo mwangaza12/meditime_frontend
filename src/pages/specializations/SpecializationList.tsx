@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
 interface Specialization {
-  id: number;
+  id: string;
   name: string;
   description: string;
   createdAt?: string;
@@ -37,7 +37,7 @@ export const SpecializationList = () => {
   const mappedSpecializations: Specialization[] = useMemo(
     () =>
       specializations.map((item: any) => ({
-        id: item.specializationId ?? item.id ?? 0, // keep as number
+        id: String(item.specializationId ?? item.id ?? 0), // ✅ Ensure id is a string
         name: item.name ?? "Unknown",
         description: item.description ?? "No description available",
         createdAt: item.createdAt,
@@ -51,7 +51,7 @@ export const SpecializationList = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This specialization will be permanently deleted.",
@@ -64,7 +64,7 @@ export const SpecializationList = () => {
 
     if (result.isConfirmed) {
       try {
-        await deleteSpecialization(id).unwrap();
+        await deleteSpecialization(Number(id)).unwrap(); // 🔁 convert to number if needed
         Swal.fire("Deleted!", "Specialization has been deleted.", "success");
         refetch();
       } catch (err) {
@@ -146,16 +146,8 @@ export const SpecializationList = () => {
             setShowModal(false);
             setEditingSpecialization(null);
           }}
-          specialization={
-            editingSpecialization
-              ? {
-                  ...editingSpecialization,
-                  id: editingSpecialization.id.toString(), // convert number to string
-                }
-              : null
-          }
-      />
-
+          specialization={editingSpecialization}
+        />
       </Modal>
     </div>
   );

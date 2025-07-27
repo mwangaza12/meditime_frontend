@@ -11,7 +11,7 @@ interface DoctorListProps {
 }
 
 interface Doctor {
-  doctorId: number;
+  doctorId: string;
   specialization: string;
   specializationId: number;
   availableDays: string;
@@ -27,7 +27,7 @@ interface Doctor {
 }
 
 interface User {
-  userId: number;
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -108,7 +108,7 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
 
   const handleEditDoctor = (doctor: Doctor) => {
     setSelectedDoctor({
-      id: doctor.doctorId,
+      id: Number(doctor.doctorId),
       userId: doctor.user.userId,
       specializationId: doctor.specializationId,
       contactPhone: doctor.user.contactPhone,
@@ -121,7 +121,7 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
 
   const handleCreateDoctorFromUser = (user: User) => {
     setSelectedDoctor({
-      userId: user.userId,
+      userId: Number(user.userId),
       specializationId: 0,
       contactPhone: user.contactPhone || '',
       availableDays: '',
@@ -271,16 +271,17 @@ export const DoctorList: React.FC<DoctorListProps> = ({ source }) => {
           </div>
 
           {isDoctors ? (
-            <Table<Doctor>
+            <Table<Doctor & { id: string }>
               columns={doctorColumns}
-              data={doctors}
+              data={doctors.map((d) => ({ ...d, id: String(d.doctorId) }))}
               loading={doctorQuery.isLoading}
               emptyText="No doctors found."
             />
+
           ) : (
-            <Table<User>
+            <Table<User & { id: string }>
               columns={userColumns}
-              data={users}
+              data={users.map((u) => ({ ...u, id: String(u.userId) }))}
               loading={userQuery.isLoading}
               emptyText="No users found."
             />
