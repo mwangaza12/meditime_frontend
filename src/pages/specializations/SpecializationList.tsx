@@ -23,12 +23,7 @@ export const SpecializationList = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingSpecialization, setEditingSpecialization] = useState<Specialization | null>(null);
 
-  const {
-    data,
-    error,
-    isLoading,
-    refetch,
-  } = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
+  const {data,error,isLoading,refetch,} = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
 
   const [deleteSpecialization] = specializationApi.useDeleteSpecializationMutation();
 
