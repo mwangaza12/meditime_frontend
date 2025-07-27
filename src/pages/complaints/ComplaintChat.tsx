@@ -7,7 +7,7 @@ import { type RootState } from "../../app/store";
 import { complaintApi } from "../../feature/api/complaintApi";
 import { io, Socket } from "socket.io-client";
 
-const SOCKET_SERVER_URL = "https://medical-patient-appointment-system.azurewebsites.net";
+const SOCKET_SERVER_URL = "https://medical-patient-appointment-system.azurewebsites.net/";
 
 let socket: Socket | null = null;
 
@@ -35,11 +35,18 @@ export default function ComplaintChat() {
     if (!complaintId) return;
 
     socket = io(SOCKET_SERVER_URL, {
+      transports: ["websocket"],
       query: { complaintId },
+      secure: true,
+      withCredentials: false,
     });
 
     socket.on("connect", () => {
-      console.log("Connected to socket server");
+      console.log("✅ Connected to socket server:", socket?.id);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Socket connection failed:", err.message);
     });
 
     socket.on("new-reply", (reply) => {
@@ -76,12 +83,8 @@ export default function ComplaintChat() {
 
       const savedReply = await addReply(replyPayload).unwrap();
 
-      // Immediately show in UI (avoid delay)
       setLiveReplies((prev) => [...prev, savedReply]);
-
-      // Emit to others
       socket?.emit("send-reply", savedReply);
-
       setNewMessage("");
     } catch (error) {
       console.error("Error sending reply:", error);
@@ -93,7 +96,6 @@ export default function ComplaintChat() {
     return "staff";
   };
 
-  // Merge replies + liveReplies, avoiding duplicates
   const allMessages = [...replies, ...liveReplies].filter(
     (value, index, self) =>
       index === self.findIndex((v) => v.replyId === value.replyId)
