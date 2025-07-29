@@ -7,11 +7,15 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-hot-toast";
 import type { RootState } from "../../app/store";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+
 
 export const AppointmentModal = ({ onClose, doctor }: { onClose: () => void; doctor: any }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState("");
   const [fee, setFee] = useState<number>(0);
+  const navigate = useNavigate();
+
 
   const [createAppointment, { isLoading }] = appointmentApi.useCreateAppointmentMutation();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -182,6 +186,7 @@ export const AppointmentModal = ({ onClose, doctor }: { onClose: () => void; doc
       await createAppointment(appointmentData).unwrap();
       toast.success("Appointment booked successfully!");
       onClose();
+       navigate("/user-dashboard/appointments");
     } catch (error: any) {
       console.error(error);
       toast.error(error?.data?.error || "Failed to book appointment.");
