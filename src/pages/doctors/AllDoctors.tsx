@@ -33,7 +33,7 @@ export const AllDoctors = () => {
   const { data: doctorsData, isLoading: doctorsLoading, error: doctorsError } =
     doctorApi.useGetAllDoctorsQuery({ page: 1, pageSize: 1000 });
 
-  const { data: specializationsData, isLoading: specializationsLoading, error: specializationsError } =
+  const { data: specializationsData, isLoading: specializationsLoading } =
     specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 50 });
 
   const allDoctors = doctorsData?.doctors || [];
@@ -131,23 +131,6 @@ export const AllDoctors = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedSpecialty, selectedAvailability, sortBy]);
 
-  if (doctorsLoading || specializationsLoading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50">
-        <Loader2 className="animate-spin w-6 h-6 text-blue-800 mr-2" />
-        <span className="text-gray-600 text-sm">Loading doctors...</span>
-      </div>
-    );
-  }
-
-  if (doctorsError || specializationsError) {
-    return (
-      <div className="min-h-screen bg-red-50 text-center p-6">
-        <p className="text-red-600 font-semibold">Error loading doctors</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-blue-50">
       <Navbar />
@@ -210,7 +193,22 @@ export const AllDoctors = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {paginatedDoctors.length > 0 ? (
+          {doctorsLoading ? (
+            Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-4 shadow-sm animate-pulse h-40"
+              >
+                <div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-1" />
+                <div className="h-4 bg-gray-100 rounded w-full mt-4" />
+              </div>
+            ))
+          ) : doctorsError ? (
+            <div className="col-span-full text-center text-red-500 py-12">
+              <p>Error loading doctors. Please try again later.</p>
+            </div>
+          ) : paginatedDoctors.length > 0 ? (
             paginatedDoctors.map((doctor: any) => (
               <div key={doctor.doctorId} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition">
                 <div className="flex items-start gap-4">
@@ -330,7 +328,6 @@ export const AllDoctors = () => {
         </Modal>
       )}
 
-
       {showBookingModal && selectedDoctor && (
         <Modal title="Schedule Appointment" show={showBookingModal} onClose={closeModals} width="max-w-xl">
           <AppointmentModal onClose={closeModals} doctor={selectedDoctor} />
@@ -338,7 +335,11 @@ export const AllDoctors = () => {
       )}
 
       {showViewModal && selectedDoctor && (
-        <Modal title={`Dr. ${selectedDoctor.user.firstName} ${selectedDoctor.user.lastName}`} show={showViewModal} onClose={closeModals}>
+        <Modal
+          title={`Dr. ${selectedDoctor.user.firstName} ${selectedDoctor.user.lastName}`}
+          show={showViewModal}
+          onClose={closeModals}
+        >
           <div className="text-sm text-gray-700 space-y-2">
             <p><strong>Email:</strong> {selectedDoctor.user.email}</p>
             <p><strong>Specialty:</strong> {selectedDoctor.specialization?.name}</p>
