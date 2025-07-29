@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Phone, Loader2, Stethoscope, LogIn, Eye } from 'lucide-react';
+import { Search, Phone, Stethoscope, LogIn, Eye } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import { doctorApi } from '../../feature/api/doctorApi';
 import { specializationApi } from '../../feature/api/specializationApi';
@@ -33,7 +33,7 @@ export const AllDoctors = () => {
   const { data: doctorsData, isLoading: doctorsLoading, error: doctorsError } =
     doctorApi.useGetAllDoctorsQuery({ page: 1, pageSize: 1000 });
 
-  const { data: specializationsData, isLoading: specializationsLoading } =
+  const { data: specializationsData } =
     specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 50 });
 
   const allDoctors = doctorsData?.doctors || [];
