@@ -8,10 +8,8 @@ import { Footer } from "../../components/Footer";
 import { BsFacebook } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
-
-// Import your API slice and action correctly
-import { userApi } from "../../feature/api/userApi";  // Adjust this path as needed
-import { setCredentials } from "../../feature/auth/authSlice";  // Adjust this path as needed
+import { userApi } from "../../feature/api/userApi";
+import { setCredentials } from "../../feature/auth/authSlice";
 
 type UserLoginForm = {
   email: string;
@@ -74,7 +72,7 @@ export const Login = () => {
       <Navbar />
       <div className="flex items-center justify-center bg-blue-50 pt-8 pb-12 px-4">
         <div className="w-full max-w-2xl">
-          <div className="bg-white rounded-3xl shadow-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-8 lg:p-12">
               <div className="mb-8 text-center">
                 <h2 className="text-3xl font-bold text-blue-800 mb-2">
