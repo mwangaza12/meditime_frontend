@@ -31,6 +31,7 @@ export const Login = () => {
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
   } = useForm<UserLoginForm>({ mode: "onChange" });
+  const pendingDoctor = localStorage.getItem('pendingBookingDoctor');
 
   const onSubmit = async (data: UserLoginForm) => {
     const loadingToastId = toast.loading("Logging in...");
@@ -44,7 +45,12 @@ export const Login = () => {
       });
 
       const role = res?.role;
-      if (role === "admin") {
+      if (pendingDoctor) {
+        localStorage.removeItem('pendingBookingDoctor');
+        navigate('/all-doctors', {
+          state: { doctorToBook: JSON.parse(pendingDoctor) },
+        });
+      } else if (role === "admin") {
         navigate("/dashboard");
       } else if (role === "doctor") {
         navigate("/doctor-dashboard");

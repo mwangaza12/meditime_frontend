@@ -8,6 +8,7 @@ import type { RootState } from '../../app/store';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../components/modal/Modal';
 import { AppointmentModal } from '../appointments/AppointmentModal';
+import { useLocation } from 'react-router-dom';
 
 const availabilityOptions = [
   'All Availability',
@@ -26,6 +27,8 @@ export const AllDoctors = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const location = useLocation();
+
 
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
@@ -104,9 +107,13 @@ export const AllDoctors = () => {
   };
 
   const handleLoginRedirect = () => {
+    if (selectedDoctor) {
+      localStorage.setItem('pendingBookingDoctor', JSON.stringify(selectedDoctor));
+    }
     setShowLoginModal(false);
     navigate('/login');
   };
+
 
   const closeModals = () => {
     setShowBookingModal(false);
@@ -126,6 +133,15 @@ export const AllDoctors = () => {
       setShowBookingModal(true);
     }
   }, [isAuthenticated, selectedDoctor, showLoginModal]);
+
+  useEffect(() => {
+    const doctorFromState = location.state?.doctorToBook;
+    if (isAuthenticated && doctorFromState) {
+      setSelectedDoctor(doctorFromState);
+      setShowBookingModal(true);
+    }
+  }, [isAuthenticated, location.state]);
+
 
   useEffect(() => {
     setCurrentPage(1);
