@@ -2,11 +2,37 @@ import { useMemo } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, isToday } from 'date-fns';
 import { Calendar, Users, MessageSquare, Activity, TrendingUp } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from 'recharts';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import { appointmentApi } from '../../feature/api/appointmentApi';
 import { AppointmentCalendar } from '../../components/charts/AppointmentCalendar';
+
+interface Appointment {
+  appointmentId: number;
+  appointmentStatus?: string;
+  user?: {
+    userId: number;
+    firstName: string;
+    lastName: string;
+  };
+  date?: string;
+  appointmentDate?: string;
+  startTime?: string;
+  duration?: number;
+  notes?: string;
+  priority?: string;
+}
+
+interface CalendarEvent {
+  title: string;
+  start: Date;
+  end: Date;
+  appointment: Appointment;
+}
 
 interface StatCardProps {
   title: string;
@@ -46,38 +72,27 @@ const StatCard: React.FC<StatCardProps> = ({
 
 export const DoctorDashboard: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const userId = user.userId;
+  const userId = user?.userId;
   const { data: appointments = [] } = appointmentApi.useGetAppointmentsByDoctorIdQuery({ doctorId: userId });
 
-  type CalendarEvent = {
-    title: string;
-    start: Date;
-    end: Date;
-    appointment: any;
-  };
-
   const calendarEvents: CalendarEvent[] = useMemo(() => {
-  return appointments
-    .filter((apt: any) => apt.appointmentDate)
-    .map((apt: any) => {
-      const [hours, minutes] = (apt.startTime || "09:00").split(':').map(Number);
-      const start = new Date(apt.appointmentDate);
-      start.setHours(hours);
-      start.setMinutes(minutes);
-      const duration = (apt.duration ?? 30) * 60000;
+    return appointments
+      .filter((apt: any): apt is Appointment => Boolean(apt?.appointmentDate))
+      .map((apt: any) => {
+        const [hours, minutes] = (apt.startTime || "09:00").split(':').map(Number);
+        const start = new Date(apt.appointmentDate!);
+        start.setHours(hours);
+        start.setMinutes(minutes);
+        const duration = (apt.duration ?? 30) * 60000;
 
-      return {
-        id: apt.appointmentId,
-        title: `${apt?.user?.firstName ?? "Patient"} ${apt?.user?.lastName ?? ""}`,
-        start,
-        end: new Date(start.getTime() + duration),
-        allDay: false,
-        original: apt,
-      };
-
-    });
-}, [appointments]);
-
+        return {
+          title: `${apt.user?.firstName ?? "Patient"} ${apt.user?.lastName ?? ""}`,
+          start,
+          end: new Date(start.getTime() + duration),
+          appointment: apt,
+        };
+      });
+  }, [appointments]);
 
   const todaysAppointments = useMemo(() => {
     return calendarEvents.filter(event => isToday(event.start)).map(event => event.appointment);
@@ -108,30 +123,31 @@ export const DoctorDashboard: React.FC = () => {
       confirmed: '#10B981',
       pending: '#3B82F6',
       cancelled: '#EF4444',
+      Unknown: '#6B7280',
     };
     return Object.entries(counts).map(([name, value]) => ({
       name,
       value,
-      color: colorMap[name] || '#6B7280',
+      color: colorMap[name.toLowerCase()] || '#6B7280',
     }));
   }, [appointments]);
 
   const recentPatients = useMemo(() => {
     const seen = new Set<number>();
     return appointments
-      .filter((a: any) => a.user && a.date && !isNaN(new Date(a.date).getTime()))
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .filter((a: any): a is Appointment => Boolean(a?.user && a?.date && !isNaN(new Date(a.date).getTime())))
+      .sort((a: any, b: any) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
       .filter((a: any) => {
-        const id = a.user.userId;
+        const id = a.user!.userId;
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
       })
       .slice(0, 5)
       .map((a: any) => ({
-        id: a.user.userId,
-        name: `${a.user.firstName} ${a.user.lastName}`,
-        lastVisit: format(new Date(a.date), 'PPP'),
+        id: a.user!.userId,
+        name: `${a.user!.firstName} ${a.user!.lastName}`,
+        lastVisit: format(new Date(a.date!), 'PPP'),
         condition: a.notes || 'N/A',
         priority: a.priority || 'Normal',
       }));
@@ -145,7 +161,7 @@ export const DoctorDashboard: React.FC = () => {
           <StatCard
             title="Today's Appointments"
             value={todaysAppointments.length.toString()}
-            subtitle={`${todaysAppointments.filter((a: any) => a.appointmentStatus === 'Confirmed').length} confirmed, ${todaysAppointments.filter((a: any) => a.appointmentStatus === 'Pending').length} pending`}
+            subtitle={`${todaysAppointments.filter(a => a?.appointmentStatus === 'confirmed').length} confirmed, ${todaysAppointments.filter(a => a?.appointmentStatus === 'pending').length} pending`}
             icon={Calendar}
             bgColor="bg-blue-50"
             iconColor="text-blue-600"
@@ -168,7 +184,7 @@ export const DoctorDashboard: React.FC = () => {
           />
           <StatCard
             title="Unread Messages"
-            value={appointments.filter((a: any) => a.appointmentStatus === 'Pending').length.toString()}
+            value={appointments.filter((a: any) => a?.appointmentStatus === 'pending').length.toString()}
             icon={MessageSquare}
             bgColor="bg-orange-50"
             iconColor="text-orange-600"
@@ -183,11 +199,9 @@ export const DoctorDashboard: React.FC = () => {
               getTitle={(a) => `${a?.user?.firstName ?? 'Patient'} ${a?.user?.lastName ?? ''}`}
             />
 
-
-
-            {/* === CHARTS === */}
+            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Patient Visits Trend */}
+              {/* Patient Visits */}
               <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-semibold text-blue-800 mb-4">Patient Visits Trend</h3>
                 <ResponsiveContainer width="100%" height={250}>
@@ -201,7 +215,7 @@ export const DoctorDashboard: React.FC = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Appointment Status */}
+              {/* Appointment Status Pie Chart */}
               <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-semibold text-blue-800 mb-4">Appointment Status</h3>
                 <ResponsiveContainer width="100%" height={250}>
@@ -232,10 +246,9 @@ export const DoctorDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Recent Patients */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="font-semibold mb-4 text-blue-800">Recent Patients</h2>

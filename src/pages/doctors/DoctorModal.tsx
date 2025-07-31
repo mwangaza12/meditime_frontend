@@ -22,18 +22,8 @@ interface DoctorModalProps {
   isEdit?: boolean;
 }
 
-export const DoctorModal = ({
-  show,
-  onClose,
-  initialData = null,
-  isEdit = false,
-}: DoctorModalProps) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isValid },
-    reset,
-  } = useForm<DoctorForm>({
+export const DoctorModal = ({show,onClose,initialData = null,isEdit = false,}: DoctorModalProps) => {
+  const {register,handleSubmit,formState: { errors, isSubmitting, isValid },reset,} = useForm<DoctorForm>({
     mode: "onChange",
     defaultValues: {
       userId: initialData?.userId ?? undefined,
@@ -45,10 +35,7 @@ export const DoctorModal = ({
 
   const [createDoctor] = doctorApi.useCreateDoctorMutation();
   const [updateDoctor] = doctorApi.useUpdateDoctorMutation();
-  const {
-    data: specializationData,
-    isLoading: specializationLoading,
-  } = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
+  const {data: specializationData,isLoading: specializationLoading,} = specializationApi.useGetAllspecializationsQuery({ page: 1, pageSize: 10 });
 
   const specializationList = specializationData?.specializations || [];
 

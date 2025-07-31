@@ -19,11 +19,7 @@ export default function ComplaintChat() {
   const [liveReplies, setLiveReplies] = useState<any[]>([]);
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const {
-    data,
-    isLoading,
-    isError,
-  } = complaintApi.useGetComplaintRepliesQuery(Number(complaintId), {
+  const {data,isLoading,isError} = complaintApi.useGetComplaintRepliesQuery(Number(complaintId), {
     skip: !complaintId,
   });
 

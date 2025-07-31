@@ -8,17 +8,7 @@ import { Footer } from "../../components/Footer";
 import { BsFacebook } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { userApi } from "../../feature/api/userApi";
-
-type UserRegisterForm = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  address: string;
-  contactPhone: string;
-  password: string;
-  confirmPassword: string;
-  termsAccepted: boolean;
-};
+import type { UserRegisterForm } from "../../types/types";
 
 export const Register = () => {
   const [showPassword, setShowPassword] = useState(false);

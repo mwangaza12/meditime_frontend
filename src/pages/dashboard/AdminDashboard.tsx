@@ -60,7 +60,7 @@ const StatCard: React.FC<StatCardProps> = ({title,value,change,changeType,icon: 
 );
 
 export const AdminDashboard = () => {
-  const { data: userData, isLoading: usersLoading } = userApi.useGetAllUsersQuery({ page: 1, pageSize: 10 });
+  const { data: userData, isLoading: usersLoading } = userApi.useGetAllUsersQuery({ page: 1, pageSize: 100 });
   const { data: appointmentData, isLoading: appointmentsLoading } = appointmentApi.useGetAllAppointmentsQuery({});
   const { data: paymentsData, isLoading: paymentsLoading } = paymentApi.useGetAllPaymentsQuery({});
   console.log(appointmentData);

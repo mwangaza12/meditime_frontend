@@ -29,7 +29,9 @@ export const UserList = () => {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
-  const { data, isLoading, refetch } = userApi.useGetAllUsersQuery({ page, pageSize });
+  const { data, isLoading, refetch } = userApi.useGetAllUsersQuery({ page:1, pageSize: 100 });
+  console.log(data);
+  const { data: userCount } = userApi.useGetAllUsersQuery({page: 1, pageSize: 100});
 
   const users: User[] = Array.isArray(data) ? data as User[] : data?.users || [];
   const totalCount: number = data?.total ?? users.length;
@@ -58,12 +60,13 @@ export const UserList = () => {
 
   // Calculate role statistics
   const roleStats = useMemo(() => {
-    const stats = { admin: 0, doctor: 0, user: 0, total: users.length };
-    users.forEach(user => {
-      stats[user.role]++;
-    });
-    return stats;
-  }, [users]);
+  const stats = { admin: 0, doctor: 0, user: 0, total: userCount?.total ?? users.length };
+  users.forEach(user => {
+    stats[user.role]++;
+  });
+  return stats;
+}, [users, userCount]);
+
 
   const [updateUser] = userApi.useUpdateUserTypeMutation();
 

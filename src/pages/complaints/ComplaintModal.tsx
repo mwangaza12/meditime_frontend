@@ -5,28 +5,12 @@ import { type RootState } from "../../app/store";
 import { complaintApi } from "../../feature/api/complaintApi";
 import toast from "react-hot-toast";
 import { MessageSquare, FileText } from "lucide-react";
-
-type ComplaintForm = {
-  userId: number;
-  relatedAppointmentId: number;
-  subject: string;
-  description: string;
-};
-
-interface ComplaintModalProps {
-  appointmentId: string;
-  onClose: () => void;
-}
+import type { ComplaintForm, ComplaintModalProps } from "../../types/types";
 
 export const ComplaintModal = ({ appointmentId, onClose }: ComplaintModalProps) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid, isSubmitting },
-    reset,
-  } = useForm<Omit<ComplaintForm, "userId" | "relatedAppointmentId">>({
+  const {register,handleSubmit,formState: { errors, isValid, isSubmitting },reset} = useForm<Omit<ComplaintForm, "userId" | "relatedAppointmentId">>({
     mode: "onChange",
   });
 

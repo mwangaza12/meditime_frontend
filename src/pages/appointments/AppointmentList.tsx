@@ -16,23 +16,8 @@ import { ComplaintModal } from "../complaints/ComplaintModal";
 import toast from "react-hot-toast";
 import { Search, Calendar } from "lucide-react";
 import Swal from "sweetalert2";
+import type { Appointment } from "../../types/types";
 
-export interface Appointment {
-  id: string;
-  patientName: string;
-  doctorName: string;
-  doctor: {
-    profileImageUrl: string;
-  }
-  specialization?: string;
-  date: string;
-  startTime: string;
-  status: "pending" | "cancelled" | "confirmed";
-  durationMinutes: number;
-  totalAmount?: number;
-  isPaid?: boolean;
-  startDateTime: string | null,
-}
 
 export const AppointmentList = () => {
   const { user } = useSelector((state: RootState) => state.auth);

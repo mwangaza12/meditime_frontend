@@ -6,10 +6,8 @@ import { TextInput } from "../../components/form/TextInput";
 import Navbar from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { userApi } from "../../feature/api/userApi"; // Adjust path
+import type { ForgotPasswordForm } from "../../types/types";
 
-type ForgotPasswordForm = {
-  email: string;
-};
 
 export const ForgotPassword = () => {
   const navigate = useNavigate();

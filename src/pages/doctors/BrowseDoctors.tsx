@@ -1,15 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Loader2,
-  Stethoscope,
-  Users,
-  Calendar,
-  Clock,
-  Phone,
-  X,
-  User,
-  LogIn
-} from "lucide-react";
+import {Loader2,Stethoscope,Users,Calendar,Clock,Phone,X,User,LogIn} from "lucide-react";
 import { doctorApi } from "../../feature/api/doctorApi";
 import { specializationApi } from "../../feature/api/specializationApi";
 import Navbar from "../../components/Navbar";

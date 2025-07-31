@@ -10,12 +10,7 @@ import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { userApi } from "../../feature/api/userApi";
 import { setCredentials } from "../../feature/auth/authSlice";
-
-type UserLoginForm = {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-};
+import type { UserLoginForm } from "../../types/types";
 
 export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -24,11 +19,7 @@ export const Login = () => {
 
   const [loginUser] = userApi.useLoginUserMutation();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isValid },
-  } = useForm<UserLoginForm>({ mode: "onChange" });
+  const {register,handleSubmit,formState: { errors, isSubmitting, isValid }} = useForm<UserLoginForm>({ mode: "onChange" });
   const pendingDoctor = localStorage.getItem('pendingBookingDoctor');
 
   const onSubmit = async (data: UserLoginForm) => {
