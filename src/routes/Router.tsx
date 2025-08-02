@@ -27,6 +27,7 @@ import { PatientAppointment } from "../pages/appointments/PatientAppointment";
 import ComplaintChat from "../pages/complaints/ComplaintChat";
 import { MedicalHistory } from "../pages/medicalHistory/MedicalHistory";
 import { PatientList } from "../pages/patients/PatientList";
+import { PaymentCancelled } from "../pages/payments/PaymentCancelled";
 
 export const router = createBrowserRouter([
   {
@@ -78,6 +79,10 @@ export const router = createBrowserRouter([
     path: "all-doctors",
     element: <AllDoctors />,
     errorElement: <Error />
+  },
+  {
+    path: "payment-cancelled",
+    element: <PaymentCancelled />
   },
 
   // Admin Dashboard
@@ -182,7 +187,7 @@ export const router = createBrowserRouter([
       {
         path:"medical-history",
         element: <MedicalHistory />
-      }
+      },
     ],
   },
 
