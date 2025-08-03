@@ -50,6 +50,7 @@ export interface Appointment {
 }
 
 export interface Complaint {
+  unreadCount: ReactNode;
   id: string;
   userName: string;
   appointmentDate: string;

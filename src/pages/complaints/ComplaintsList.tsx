@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { complaintApi } from "../../feature/api/complaintApi";
 import { Spinner } from "../../components/loader/Spinner";
-import { Table } from "../../components/table/Table";
 import { type RootState } from "../../app/store";
-import {AlertCircle,CheckCircle,Clock,XCircle,Filter,} from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Filter,
+} from "lucide-react";
 import type { Complaint } from "../../types/types";
-
 
 export const ComplaintsList = () => {
   const navigate = useNavigate();
@@ -31,8 +35,6 @@ export const ComplaintsList = () => {
   } = complaintApi.useGetUserComplaintsQuery(user?.userId, {
     skip: isAdmin || !user?.userId,
   });
-
-  const [changeStatus] = complaintApi.useChangeComplaintStatusMutation();
 
   const complaintsData = isAdmin ? allComplaints : userComplaints;
   const isLoading = isAdmin ? adminLoading : userLoading;
@@ -67,6 +69,7 @@ export const ComplaintsList = () => {
         complaintText: item.description || "No details provided",
         status: mapStatus(item.status),
         createdAt: new Date(item.createdAt).toLocaleDateString(),
+        unreadCount: item.unreadCount || 0, // 👈 unread count
       })),
     [complaintsData]
   );
@@ -91,154 +94,49 @@ export const ComplaintsList = () => {
     );
   }, [mappedComplaints]);
 
-  const getStatusBadge = (status: Complaint["status"]) => {
-    switch (status) {
-      case "open":
-        return "bg-gray-100 text-gray-800";
-      case "inProgress":
-        return "bg-yellow-100 text-yellow-800";
-      case "resolved":
-        return "bg-green-100 text-green-800";
-      case "closed":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const columns = useMemo(
-    () => [
-      { header: "User", accessor: "userName" as keyof Complaint },
-      { header: "Subject", accessor: (row: Complaint) => row.subject },
-      { header: "Appointment Date", accessor: (row: Complaint) => row.appointmentDate },
-      { header: "Complaint", accessor: "complaintText" as keyof Complaint },
-      {
-        header: "Status",
-        accessor: (row: Complaint) => {
-          if (isAdmin) {
-            return (
-              <select
-                value={row.status}
-                onChange={async (e) => {
-                  const newStatus = e.target.value as Complaint["status"];
-                  try {
-                    await changeStatus({ complaintId: row.id, status: newStatus });
-                  } catch (err) {
-                    console.error("Failed to update status", err);
-                  }
-                }}
-                className="text-xs px-2 py-1 rounded border border-gray-300 bg-white"
-              >
-                {["open", "inProgress", "resolved", "closed"].map((statusOption) => (
-                  <option key={statusOption} value={statusOption}>
-                    {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
-                  </option>
-                ))}
-              </select>
-            );
-          }
-
-          return (
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
-                row.status
-              )}`}
-            >
-              {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-            </span>
-          );
-        },
-      },
-      { header: "Created At", accessor: (row: Complaint) => row.createdAt },
-      {
-        header: "Actions",
-        accessor: (row: Complaint) => (
-          <button
-            onClick={() =>
-              navigate(
-                isAdmin
-                  ? `/dashboard/complaints/${row.id}`
-                  : `/user-dashboard/complaints/${row.id}`
-              )
-            }
-            className="text-blue-600 hover:underline text-sm whitespace-nowrap"
-          >
-            Chat
-          </button>
-        ),
-      },
-    ],
-    [navigate, isAdmin, changeStatus]
-  );
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <p className="text-gray-600">
           {isAdmin
             ? "Manage all patient complaints"
             : "View and submit your complaints"}
         </p>
 
-        {/* Status Cards */}
+        {/* Filters */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div
-            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "all" ? "bg-blue-100" : "bg-white"}`}
-            onClick={() => setStatusFilter("all")}
-          >
-            <div>
-              <p className="text-sm text-slate-600">All Complaints</p>
-              <p className="text-2xl font-bold text-blue-800">{mappedComplaints.length}</p>
+          {[
+            { label: "All Complaints", status: "all", count: mappedComplaints.length, icon: <Filter className="w-6 h-6 text-blue-800" /> },
+            { label: "Open", status: "open", count: statusStats.open, icon: <AlertCircle className="w-6 h-6 text-gray-800" /> },
+            { label: "In Progress", status: "inProgress", count: statusStats.inProgress, icon: <Clock className="w-6 h-6 text-yellow-600" /> },
+            { label: "Resolved", status: "resolved", count: statusStats.resolved, icon: <CheckCircle className="w-6 h-6 text-green-600" /> },
+            { label: "Closed", status: "closed", count: statusStats.closed, icon: <XCircle className="w-6 h-6 text-red-600" /> },
+          ].map(({ label, status, count, icon }) => (
+            <div
+              key={status}
+              onClick={() => setStatusFilter(status as any)}
+              className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${
+                statusFilter === status
+                  ? {
+                      all: "bg-blue-100",
+                      open: "bg-gray-100",
+                      inProgress: "bg-yellow-100",
+                      resolved: "bg-green-100",
+                      closed: "bg-red-100",
+                    }[status]
+                  : "bg-white"
+              }`}
+            >
+              <div>
+                <p className="text-sm text-slate-600">{label}</p>
+                <p className="text-2xl font-bold">{count}</p>
+              </div>
+              {icon}
             </div>
-            <Filter className="w-6 h-6 text-blue-800" />
-          </div>
-
-          <div
-            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "open" ? "bg-gray-100" : "bg-white"}`}
-            onClick={() => setStatusFilter("open")}
-          >
-            <div>
-              <p className="text-sm text-slate-600">Open</p>
-              <p className="text-2xl font-bold text-gray-800">{statusStats.open}</p>
-            </div>
-            <AlertCircle className="w-6 h-6 text-gray-800" />
-          </div>
-
-          <div
-            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "inProgress" ? "bg-yellow-100" : "bg-white"}`}
-            onClick={() => setStatusFilter("inProgress")}
-          >
-            <div>
-              <p className="text-sm text-slate-600">In Progress</p>
-              <p className="text-2xl font-bold text-yellow-600">{statusStats.inProgress}</p>
-            </div>
-            <Clock className="w-6 h-6 text-yellow-600" />
-          </div>
-
-          <div
-            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "resolved" ? "bg-green-100" : "bg-white"}`}
-            onClick={() => setStatusFilter("resolved")}
-          >
-            <div>
-              <p className="text-sm text-slate-600">Resolved</p>
-              <p className="text-2xl font-bold text-green-600">{statusStats.resolved}</p>
-            </div>
-            <CheckCircle className="w-6 h-6 text-green-600" />
-          </div>
-
-          <div
-            className={`cursor-pointer p-4 rounded-xl shadow-sm flex items-center justify-between ${statusFilter === "closed" ? "bg-red-100" : "bg-white"}`}
-            onClick={() => setStatusFilter("closed")}
-          >
-            <div>
-              <p className="text-sm text-slate-600">Closed</p>
-              <p className="text-2xl font-bold text-red-600">{statusStats.closed}</p>
-            </div>
-            <XCircle className="w-6 h-6 text-red-600" />
-          </div>
+          ))}
         </div>
 
-        {/* Table */}
+        {/* List */}
         {isLoading ? (
           <Spinner />
         ) : isEmptyError || mappedComplaints.length === 0 ? (
@@ -250,36 +148,75 @@ export const ComplaintsList = () => {
         ) : error ? (
           <p className="text-red-500">Failed to load complaints.</p>
         ) : (
-          <>
-            <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-              <Table
-                columns={columns}
-                data={filteredComplaints}
-                selectable={isAdmin}
-                emptyText="No complaints found."
-              />
-            </div>
+          <div className="divide-y rounded-xl border border-gray-200 bg-white shadow-sm">
+            {filteredComplaints.map((complaint) => (
+              <div
+                key={complaint.id}
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                onClick={() =>
+                  navigate(
+                    isAdmin
+                      ? `/dashboard/complaints/${complaint.id}`
+                      : `/user-dashboard/complaints/${complaint.id}`
+                  )
+                }
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                      complaint.status === "resolved"
+                        ? "bg-green-200 text-green-800"
+                        : complaint.status === "closed"
+                        ? "bg-red-200 text-red-800"
+                        : complaint.status === "inProgress"
+                        ? "bg-yellow-200 text-yellow-800"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {complaint.userName.charAt(0).toUpperCase()}
+                  </div>
 
-            {/* Pagination (for admin only) */}
-            {isAdmin && (
-              <div className="flex justify-between items-center mt-4">
-                <button
-                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 border rounded disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-slate-600">Page {page}</span>
-                <button
-                  onClick={() => setPage((prev) => prev + 1)}
-                  className="px-4 py-2 border rounded"
-                >
-                  Next
-                </button>
+                  <div className="flex flex-col max-w-xs md:max-w-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">{complaint.subject}</span>
+                      {complaint.unreadCount > 0 && (
+                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                          {complaint.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500 truncate">
+                      {complaint.complaintText}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                  {complaint.createdAt}
+                </div>
               </div>
-            )}
-          </>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {isAdmin && filteredComplaints.length > 0 && (
+          <div className="flex justify-between items-center mt-4">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="px-4 py-2 border rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-slate-600">Page {page}</span>
+            <button
+              onClick={() => setPage((prev) => prev + 1)}
+              className="px-4 py-2 border rounded"
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
     </div>
