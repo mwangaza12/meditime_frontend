@@ -84,7 +84,7 @@ const nextAppointment = useMemo(() => {
         return acc + (isNaN(amount) ? 0 : amount);
       }, 0);
 
-      return sum + (paymentSum * 100);
+      return sum + (paymentSum);
     }, 0);
   }, [appointments]);
 
