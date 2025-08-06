@@ -89,7 +89,7 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <AppLayout />
       </ProtectedRoute>
     ),
@@ -146,7 +146,7 @@ export const router = createBrowserRouter([
   {
     path: "/user-dashboard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['user']}>
         <AppLayout />
       </ProtectedRoute>
     ),
@@ -195,7 +195,7 @@ export const router = createBrowserRouter([
   {
     path: "/doctor-dashboard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['doctor']}>
         <AppLayout />
       </ProtectedRoute>
     ),

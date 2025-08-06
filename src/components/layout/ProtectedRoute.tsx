@@ -1,20 +1,25 @@
 import { useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import type { RootState } from '../../app/store';
 
-
 type ProtectedRouteProps = {
-    children: React.ReactNode;
+  children: React.ReactNode;
+  allowedRoles: string[]; // 👈 Pass allowed roles
 };
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const location = useLocation();
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-    return <>{children}</>;
+  if (!allowedRoles.includes(user?.role)) {
+    return <Navigate to="/" replace />; // Or a 403 page
+  }
+
+  return <>{children}</>;
 }
 
 export default ProtectedRoute;
