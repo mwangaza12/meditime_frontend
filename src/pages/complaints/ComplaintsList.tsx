@@ -179,7 +179,7 @@ export const ComplaintsList = () => {
                   <div className="flex flex-col max-w-xs md:max-w-sm">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm truncate">{complaint.subject}</span>
-                      {complaint.unreadCount > 0 && (
+                      {typeof complaint.unreadCount === "number" && complaint.unreadCount > 0 && (
                         <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                           {complaint.unreadCount}
                         </span>
