@@ -1,4 +1,6 @@
 // types.ts
+import { type ReactNode } from "react";
+
 export interface DoctorUser {
     firstName: string;
     lastName: string;
