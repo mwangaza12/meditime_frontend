@@ -63,7 +63,6 @@ export const AdminDashboard = () => {
   const { data: userData, isLoading: usersLoading } = userApi.useGetAllUsersQuery({ page: 1, pageSize: 100 });
   const { data: appointmentData, isLoading: appointmentsLoading } = appointmentApi.useGetAllAppointmentsQuery({});
   const { data: paymentsData, isLoading: paymentsLoading } = paymentApi.useGetAllPaymentsQuery({});
-  console.log(appointmentData);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

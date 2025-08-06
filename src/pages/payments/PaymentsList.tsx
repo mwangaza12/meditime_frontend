@@ -58,7 +58,6 @@ export const PaymentsList = () => {
     patientName: ''
   });
   
-  const USD_TO_KES = 100;
 
   const queryParams = { page, pageSize };
 
@@ -192,7 +191,7 @@ export const PaymentsList = () => {
         `"${payment.doctorName}"`,
         `"${payment.doctorSpecialization}"`,
         payment.amount.toFixed(2),
-        (payment.amount * USD_TO_KES).toFixed(2),
+        (payment.amount).toFixed(2),
         payment.status,
         payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A',
         payment.appointmentDate !== 'N/A' ? new Date(payment.appointmentDate).toLocaleDateString() : 'N/A'
@@ -213,7 +212,7 @@ export const PaymentsList = () => {
       payments: payments.map(payment => ({
         ...payment,
         amountUSD: payment.amount,
-        amountKSh: payment.amount * USD_TO_KES,
+        amountKSh: payment.amount,
         paymentDate: payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A',
         appointmentDate: payment.appointmentDate !== 'N/A' ? new Date(payment.appointmentDate).toLocaleDateString() : 'N/A'
       }))
@@ -262,7 +261,7 @@ export const PaymentsList = () => {
     const paymentsToExport = showFilters ? filteredPayments : mappedPayments;
     const totalAmount = paymentsToExport
       .filter(p => p.status === "completed")
-      .reduce((sum, p) => sum + p.amount, 0) * USD_TO_KES;
+      .reduce((sum, p) => sum + p.amount, 0);
 
     const result = await Swal.fire({
       title: 'Generate Payment Report',
@@ -454,7 +453,7 @@ export const PaymentsList = () => {
       },
       {
         header: "Amount",
-        accessor: (row) => `KSh ${(row.amount * USD_TO_KES).toFixed(2)}`,
+        accessor: (row) => `KSh ${(row.amount).toFixed(2)}`,
       },
       {
         header: "Status",
@@ -530,7 +529,7 @@ export const PaymentsList = () => {
           />
           <StatCard 
             title="Total Amount" 
-            value={(paymentStats.totalAmount * USD_TO_KES)} 
+            value={(paymentStats.totalAmount)} 
             icon={CreditCard} 
             color="bg-emerald-50 text-emerald-600" 
             prefix="KSh "
