@@ -65,5 +65,13 @@ export const complaintApi = createApi({
             invalidatesTags: ["Complaints"],
         }),
 
+        chatWithBot: builder.mutation({
+            query: (message: string) => ({
+                url: '/complaints/chatgpt',
+                method: 'POST',
+                body: { message },
+            }),
+        }),
+
     })
 })
