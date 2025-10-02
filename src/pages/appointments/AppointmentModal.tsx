@@ -106,9 +106,9 @@ export const AppointmentModal = ({ onClose, doctor }: { onClose: () => void; doc
 
     const uniqueSortedSlots = [...new Set(allTimeSlots)].sort();
 
-    const bookedSlots = (bookedAppointments || []).map((a: any) =>
-      a.startTime?.slice(0, 5)
-    );
+    const bookedSlots = (bookedAppointments || [])
+  .filter((a: any) => a.doctorId === doctor.doctorId) // ✅ ensure same doctor
+  .map((a: any) => a.startTime?.slice(0, 5));
 
     return uniqueSortedSlots.filter((slot) => !bookedSlots.includes(slot));
   };
